@@ -1,18 +1,35 @@
 /**
  * FIREBASE-CONFIG.JS - Firebase Configuration and Database Operations
  * Portfolio Website - Black & White Minimalistic Theme
+ * FIXED VERSION - Resolves infinite loops, race conditions, and 400 errors
  */
 
-// Your Firebase configuration (works for both dev and production)
-const firebaseConfig = {
-  apiKey: "AIzaSyCBUX2wKjdwYSw61T5_xGONXj34j5C5q2I",
-  authDomain: "mesog-portfolio.firebaseapp.com",
-  projectId: "mesog-portfolio",
-  storageBucket: "mesog-portfolio.firebasestorage.app",
-  messagingSenderId: "364503690658",
-  appId: "1:364503690658:web:cf39d35305364365ed16fb",
-  measurementId: "G-WYZYKX4RJL"
-};
+// Get Firebase configuration from environment or use defaults
+function getFirebaseConfig() {
+  // Try to get from environment variables first
+  if (window.ENV && window.ENV.FIREBASE_PROJECT_ID) {
+    return {
+      apiKey: window.ENV.FIREBASE_API_KEY,
+      authDomain: window.ENV.FIREBASE_AUTH_DOMAIN,
+      projectId: window.ENV.FIREBASE_PROJECT_ID,
+      storageBucket: window.ENV.FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: window.ENV.FIREBASE_MESSAGING_SENDER_ID,
+      appId: window.ENV.FIREBASE_APP_ID,
+      measurementId: window.ENV.FIREBASE_MEASUREMENT_ID
+    };
+  }
+  
+  // Fallback to hardcoded config (for development)
+  return {
+    apiKey: "AIzaSyCBUX2wKjdwYSw61T5_xGONXj34j5C5q2I",
+    authDomain: "mesog-portfolio.firebaseapp.com",
+    projectId: "mesog-portfolio",
+    storageBucket: "mesog-portfolio.firebasestorage.app",
+    messagingSenderId: "364503690658",
+    appId: "1:364503690658:web:cf39d35305364365ed16fb",
+    measurementId: "G-WYZYKX4RJL"
+  };
+}
 
 // Firebase services
 let app = null;
@@ -20,29 +37,59 @@ let db = null;
 let auth = null;
 let storage = null;
 
-// Firebase state
+// Firebase state with proper initialization tracking
 const FirebaseService = {
   isInitialized: false,
+  isInitializing: false,
+  initializationError: null,
   isOnline: navigator.onLine,
   user: null,
-  listeners: {}
+  listeners: {},
+  initializationAttempts: 0,
+  maxAttempts: 3
 };
 
 /**
- * Initialize Firebase services
+ * Initialize Firebase services with proper error handling
  */
 async function initializeFirebase() {
+  // Prevent multiple simultaneous initialization attempts
+  if (FirebaseService.isInitialized || FirebaseService.isInitializing) {
+    return FirebaseService.isInitialized;
+  }
+  
+  // Prevent infinite attempts
+  if (FirebaseService.initializationAttempts >= FirebaseService.maxAttempts) {
+    console.error('Firebase initialization failed after maximum attempts');
+    FirebaseService.initializationError = new Error('Max initialization attempts exceeded');
+    return false;
+  }
+  
+  FirebaseService.isInitializing = true;
+  FirebaseService.initializationAttempts++;
+  
   try {
-    console.log('Initializing Firebase...');
+    console.log(`Firebase initialization attempt ${FirebaseService.initializationAttempts}...`);
     
     // Check if Firebase SDK is loaded
     if (typeof firebase === 'undefined') {
-      console.warn('Firebase SDK not loaded. Using offline mode.');
-      return false;
+      throw new Error('Firebase SDK not loaded');
+    }
+    
+    // Get configuration
+    const firebaseConfig = getFirebaseConfig();
+    
+    // Validate configuration
+    if (!firebaseConfig.projectId || !firebaseConfig.apiKey) {
+      throw new Error('Invalid Firebase configuration - missing required fields');
     }
     
     // Initialize Firebase app
-    app = firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+      app = firebase.initializeApp(firebaseConfig);
+    } else {
+      app = firebase.app();
+    }
     
     // Initialize services
     db = firebase.firestore();
@@ -58,13 +105,53 @@ async function initializeFirebase() {
     // Set up connectivity monitoring
     setupConnectivityMonitoring();
     
+    // Test connection with a simple read
+    await testFirebaseConnection();
+    
     FirebaseService.isInitialized = true;
+    FirebaseService.isInitializing = false;
+    FirebaseService.initializationError = null;
+    
     console.log('Firebase initialized successfully');
     
+    // Notify any waiting components
+    notifyInitializationComplete();
+    
     return true;
+    
   } catch (error) {
     console.error('Firebase initialization failed:', error);
+    FirebaseService.isInitializing = false;
+    FirebaseService.initializationError = error;
+    
+    // Don't retry immediately for certain errors
+    if (error.code === 'auth/invalid-api-key' || 
+        error.code === 'auth/project-not-found' ||
+        error.message.includes('Invalid Firebase configuration')) {
+      console.error('Fatal Firebase configuration error - will not retry');
+      FirebaseService.initializationAttempts = FirebaseService.maxAttempts;
+    }
+    
     return false;
+  }
+}
+
+/**
+ * Test Firebase connection
+ */
+async function testFirebaseConnection() {
+  if (!db) throw new Error('Firestore not initialized');
+  
+  try {
+    // Try to read from a test collection
+    await db.collection('_test').limit(1).get();
+  } catch (error) {
+    if (error.code === 'permission-denied') {
+      // This is actually expected - it means connection works but we don't have permission
+      console.log('Firebase connection test successful (permission denied as expected)');
+      return;
+    }
+    throw error;
   }
 }
 
@@ -169,11 +256,21 @@ function showConnectionStatus(status) {
 }
 
 /**
+ * Notify components that Firebase is ready
+ */
+function notifyInitializationComplete() {
+  // Dispatch custom event
+  window.dispatchEvent(new CustomEvent('firebaseReady', {
+    detail: { success: true }
+  }));
+}
+
+/**
  * Log security events
  */
 async function logSecurityEvent(eventType, data = {}) {
   try {
-    if (db) {
+    if (db && FirebaseService.isInitialized) {
       await db.collection('security_logs').add({
         eventType,
         ...data,
@@ -486,6 +583,7 @@ async function getFeaturedProjects() {
   try {
     const snapshot = await db.collection('projects')
       .where('featured', '==', true)
+      .where('status', 'in', ['published', 'completed'])
       .orderBy('createdAt', 'desc')
       .limit(3)
       .get();
@@ -815,13 +913,23 @@ async function getAnalytics(dateRange = 30) {
 }
 
 /* ==========================================================================
-   INITIALIZATION
+   INITIALIZATION WITH PROPER ERROR HANDLING
    ========================================================================== */
 
-// Initialize Firebase when DOM is loaded
+// Wait for DOM and try to initialize Firebase
 document.addEventListener('DOMContentLoaded', function() {
-  initializeFirebase();
+  // Small delay to ensure all scripts are loaded
+  setTimeout(() => {
+    initializeFirebase();
+  }, 100);
 });
+
+// Also initialize when Firebase SDK loads (if DOM already ready)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeFirebase);
+} else {
+  setTimeout(initializeFirebase, 100);
+}
 
 // Export Firebase service object for global access
 window.FirebaseService = {
@@ -829,6 +937,7 @@ window.FirebaseService = {
   initialize: initializeFirebase,
   isInitialized: () => FirebaseService.isInitialized,
   isOnline: () => FirebaseService.isOnline,
+  getInitializationError: () => FirebaseService.initializationError,
   
   // Authentication
   signIn: signInWithEmail,

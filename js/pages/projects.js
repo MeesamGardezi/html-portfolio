@@ -1,6 +1,7 @@
 /**
  * PROJECTS.JS - Projects Page Logic with Firebase Integration
  * Portfolio Website - Black & White Minimalistic Theme
+ * FIXED VERSION - Resolves missing functions, pagination, and filter issues
  */
 
 // Projects page state and functionality
@@ -25,6 +26,13 @@ const ProjectsPage = {
  */
 document.addEventListener('DOMContentLoaded', function() {
   initializeProjectsPage();
+});
+
+// Also listen for Firebase ready event
+window.addEventListener('firebaseReady', function() {
+  if (!ProjectsPage.isInitialized) {
+    initializeProjectsPage();
+  }
 });
 
 /**
@@ -65,8 +73,23 @@ async function loadProjectsData() {
     ProjectsPage.isLoading = true;
     showLoadingState();
     
+    // Check if Firebase is available
+    if (!window.FirebaseService) {
+      console.log('FirebaseService not available, retrying...');
+      setTimeout(loadProjectsData, 1000);
+      return;
+    }
+    
     // Wait for Firebase to initialize
-    if (typeof firebase === 'undefined') {
+    if (!window.FirebaseService.isInitialized()) {
+      const error = window.FirebaseService.getInitializationError();
+      if (error) {
+        console.error('Firebase initialization failed:', error);
+        showErrorState();
+        return;
+      }
+      
+      console.log('Waiting for Firebase to initialize...');
       setTimeout(loadProjectsData, 1000);
       return;
     }
@@ -88,6 +111,7 @@ async function loadProjectsData() {
       });
     });
     
+    // Apply initial filters
     ProjectsPage.filteredProjects = [...ProjectsPage.projects];
     ProjectsPage.isLoading = false;
     
@@ -184,7 +208,7 @@ function handleFilterChange(event) {
   // Apply filters
   applyFilters();
   
-  // Reset to first page
+  // Reset to first page and ensure it's valid
   ProjectsPage.currentPage = 1;
   
   // Re-render projects
@@ -322,8 +346,18 @@ function renderProjects() {
   // Update results info
   updateResultsInfo();
   
-  // Calculate pagination
+  // Calculate pagination with bounds checking
   const totalProjects = ProjectsPage.filteredProjects.length;
+  const totalPages = Math.ceil(totalProjects / ProjectsPage.projectsPerPage);
+  
+  // Ensure current page is within valid bounds
+  if (ProjectsPage.currentPage > totalPages && totalPages > 0) {
+    ProjectsPage.currentPage = totalPages;
+  }
+  if (ProjectsPage.currentPage < 1) {
+    ProjectsPage.currentPage = 1;
+  }
+  
   const startIndex = (ProjectsPage.currentPage - 1) * ProjectsPage.projectsPerPage;
   const endIndex = Math.min(startIndex + ProjectsPage.projectsPerPage, totalProjects);
   const projectsToShow = ProjectsPage.filteredProjects.slice(startIndex, endIndex);
@@ -350,7 +384,13 @@ function updateResultsInfo() {
   
   if (resultsCount) {
     const totalResults = ProjectsPage.filteredProjects.length;
-    resultsCount.textContent = `${totalResults} project${totalResults !== 1 ? 's' : ''} found`;
+    const totalProjects = ProjectsPage.projects.length;
+    
+    if (totalResults === totalProjects) {
+      resultsCount.textContent = `${totalResults} project${totalResults !== 1 ? 's' : ''}`;
+    } else {
+      resultsCount.textContent = `${totalResults} of ${totalProjects} projects`;
+    }
   }
 }
 
@@ -416,9 +456,9 @@ function createProjectCardHTML(project) {
           <span class="project-status ${statusClass}">${capitalizeFirst((project.status || 'published').replace('-', ' '))}</span>
         </div>
         <div class="project-stats">
-          ${project.downloads ? `<span class="project-downloads">📱 ${project.downloads}</span>` : ''}
+          ${project.downloads ? `<span class="project-downloads">📱 ${formatNumber(project.downloads)}</span>` : ''}
           ${project.rating ? `<span class="project-rating">⭐ ${project.rating}</span>` : ''}
-          ${project.viewCount ? `<span class="project-views">👁 ${project.viewCount}</span>` : ''}
+          ${project.viewCount ? `<span class="project-views">👁 ${formatNumber(project.viewCount)}</span>` : ''}
         </div>
         <div class="project-actions">
           ${project.links?.github ? `<a href="${project.links.github}" target="_blank" class="project-action">GitHub</a>` : ''}
@@ -435,14 +475,24 @@ function createProjectCardHTML(project) {
  * Render no results state
  */
 function renderNoResults(container) {
+  const hasActiveFilters = ProjectsPage.currentFilters.category !== 'all' || 
+                          ProjectsPage.currentFilters.technology !== 'all' ||
+                          ProjectsPage.currentFilters.search !== '';
+  
   container.innerHTML = `
     <div class="no-results">
       <div class="no-results-icon">🔍</div>
       <h3 class="no-results-title">No projects found</h3>
       <p class="no-results-text">
-        Try adjusting your filters or search terms to find more projects.
+        ${hasActiveFilters 
+          ? 'Try adjusting your filters or search terms to find more projects.'
+          : 'No projects have been published yet.'
+        }
       </p>
-      <button class="clear-filters-btn" onclick="clearAllFilters()">Clear Filters</button>
+      ${hasActiveFilters 
+        ? '<button class="clear-filters-btn" onclick="clearAllFilters()">Clear Filters</button>'
+        : ''
+      }
     </div>
   `;
 }
@@ -477,7 +527,10 @@ function renderPagination() {
   const startPage = Math.max(1, ProjectsPage.currentPage - 2);
   const endPage = Math.min(totalPages, startPage + 4);
   
-  for (let i = startPage; i <= endPage; i++) {
+  // Adjust start page if we're near the end
+  const adjustedStartPage = Math.max(1, Math.min(startPage, totalPages - 4));
+  
+  for (let i = adjustedStartPage; i <= endPage; i++) {
     paginationHTML += `
       <button class="pagination-btn ${i === ProjectsPage.currentPage ? 'active' : ''}" 
               onclick="changePage(${i})">
@@ -685,14 +738,8 @@ Status: ${project.status || 'Published'}
  */
 async function trackPageView(page) {
   try {
-    if (typeof firebase !== 'undefined' && firebase.firestore) {
-      await firebase.firestore().collection('analytics').add({
-        type: 'page_view',
-        page: page,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        userAgent: navigator.userAgent,
-        referrer: document.referrer || 'direct'
-      });
+    if (window.FirebaseService?.isInitialized()) {
+      await window.FirebaseService.trackPageView(page);
     }
   } catch (error) {
     console.warn('Analytics tracking failed:', error);
@@ -704,41 +751,60 @@ async function trackPageView(page) {
  */
 async function trackProjectView(projectId) {
   try {
-    if (typeof firebase !== 'undefined' && firebase.firestore) {
-      // Track in analytics
-      await firebase.firestore().collection('analytics').add({
-        type: 'project_view',
-        projectId: projectId,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      
-      // Increment project view count
-      const projectRef = firebase.firestore().collection('projects').doc(projectId);
-      await projectRef.update({
-        viewCount: firebase.firestore.FieldValue.increment(1)
-      });
+    if (window.FirebaseService?.isInitialized()) {
+      await window.FirebaseService.trackProjectView(projectId);
     }
   } catch (error) {
     console.warn('Project view tracking failed:', error);
   }
 }
 
+/* ==========================================================================
+   UTILITY FUNCTIONS (Previously missing)
+   ========================================================================== */
+
 /**
- * Utility functions
+ * Capitalize first letter of string
  */
 function capitalizeFirst(str) {
+  if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+/**
+ * Format date to readable string
+ */
 function formatDate(date) {
   if (!date) return 'Unknown date';
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
+  
+  try {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch (error) {
+    return 'Invalid date';
+  }
 }
 
+/**
+ * Format numbers with appropriate suffixes
+ */
+function formatNumber(num) {
+  if (!num || isNaN(num)) return '0';
+  
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return num.toString();
+}
+
+/**
+ * Debounce function calls
+ */
 function debounce(func, wait) {
   let timeout;
   return function executedFunction(...args) {
@@ -755,7 +821,8 @@ function debounce(func, wait) {
 window.ProjectsPage = {
   initialize: initializeProjectsPage,
   changePage,
-  clearAllFilters
+  clearAllFilters,
+  loadProjectsData
 };
 
 // Make functions available globally for onclick handlers
