@@ -1,296 +1,412 @@
-<!-- HOME PAGE CONTENT - Loaded into layout.html -->
-
-<!-- Hero Section -->
-<section id="home" class="hero-section">
-  <div class="container">
-    <div class="hero-content">
-      <div class="hero-text">
-        <h1 class="hero-title">
-          <span class="hero-greeting">Hello, I'm</span>
-          <span class="hero-name">Your Name</span>
-        </h1>
-        <h2 class="hero-subtitle">Flutter Developer</h2>
-        <p class="hero-description">
-          I create beautiful, performant mobile applications using Flutter and Dart. 
-          Passionate about clean code, user experience, and bringing ideas to life 
-          across iOS and Android platforms.
-        </p>
-        <div class="hero-actions">
-          <a href="#" onclick="loadPage('projects')" class="btn btn-primary">View My Work</a>
-          <a href="#contact" class="btn btn-secondary">Get In Touch</a>
-        </div>
-      </div>
-      <div class="hero-image">
-        <div class="hero-image-container">
-          <img src="assets/images/profile.jpg" alt="Your Name - Flutter Developer" class="profile-image">
-        </div>
-      </div>
-    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Flutter Developer Portfolio - Showcasing mobile app development expertise">
+    <meta name="keywords" content="Flutter, Dart, Mobile Development, iOS, Android, Firebase">
+    <meta name="author" content="Your Name">
     
-    <div class="hero-scroll">
-      <a href="#about" class="scroll-indicator">
-        <span class="scroll-text">Scroll Down</span>
-        <div class="scroll-arrow"></div>
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- About Section -->
-<section id="about" class="about-section section">
-  <div class="container">
-    <div class="section-header">
-      <h2 class="section-title">About Me</h2>
-      <p class="section-subtitle">Get to know more about my background and expertise</p>
-    </div>
+    <title id="page-title">Flutter Developer Portfolio</title>
     
-    <div class="about-content">
-      <p class="about-paragraph">
-        As a passionate Flutter developer with over 3 years of experience, I specialize in 
-        creating cross-platform mobile applications that deliver exceptional user experiences. 
-        My expertise spans the entire development lifecycle, from concept and design to 
-        deployment and maintenance.
-      </p>
-      <p class="about-paragraph">
-        I'm proficient in Dart, Firebase, and various state management solutions including 
-        Provider, Riverpod, and Bloc. I have a strong foundation in UI/UX principles and 
-        enjoy collaborating with designers to bring pixel-perfect designs to life.
-      </p>
-      
-      <div class="about-highlights">
-        <div class="highlight-item">
-          <h3 class="highlight-title">15+</h3>
-          <p class="highlight-text">Apps Published</p>
-        </div>
-        <div class="highlight-item">
-          <h3 class="highlight-title">3+</h3>
-          <p class="highlight-text">Years Experience</p>
-        </div>
-        <div class="highlight-item">
-          <h3 class="highlight-title">50K+</h3>
-          <p class="highlight-text">App Downloads</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Featured Projects Section -->
-<section id="projects" class="featured-projects-section section">
-  <div class="container">
-    <div class="section-header">
-      <h2 class="section-title">Featured Projects</h2>
-      <p class="section-subtitle">A showcase of my best Flutter applications</p>
-    </div>
+    <!-- Preconnect to fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     
-    <div class="projects-grid">
-      <!-- Project Card 1 -->
-      <article class="project-card featured">
-        <div class="project-image">
-          <img src="assets/images/projects/project-1.jpg" alt="E-Commerce App" loading="lazy">
-          <div class="project-overlay">
-            <a href="#" onclick="loadProjectDetail('ecommerce-app')" class="project-link">View Details</a>
-          </div>
-        </div>
-        <div class="project-content">
-          <h3 class="project-title">E-Commerce Mobile App</h3>
-          <p class="project-description">
-            Full-featured shopping app with Firebase backend, payment integration, 
-            and real-time order tracking.
-          </p>
-          <div class="project-tech">
-            <span class="tech-tag">Flutter</span>
-            <span class="tech-tag">Firebase</span>
-            <span class="tech-tag">Stripe</span>
-          </div>
-        </div>
-      </article>
-
-      <!-- Project Card 2 -->
-      <article class="project-card featured">
-        <div class="project-image">
-          <img src="assets/images/projects/project-2.jpg" alt="Fitness Tracker App" loading="lazy">
-          <div class="project-overlay">
-            <a href="#" onclick="loadProjectDetail('fitness-tracker')" class="project-link">View Details</a>
-          </div>
-        </div>
-        <div class="project-content">
-          <h3 class="project-title">Fitness Tracker App</h3>
-          <p class="project-description">
-            Comprehensive fitness tracking with workout plans, progress monitoring, 
-            and social features.
-          </p>
-          <div class="project-tech">
-            <span class="tech-tag">Flutter</span>
-            <span class="tech-tag">SQLite</span>
-            <span class="tech-tag">Charts</span>
-          </div>
-        </div>
-      </article>
-
-      <!-- Project Card 3 -->
-      <article class="project-card featured">
-        <div class="project-image">
-          <img src="assets/images/projects/project-3.jpg" alt="Weather App" loading="lazy">
-          <div class="project-overlay">
-            <a href="#" onclick="loadProjectDetail('weather-app')" class="project-link">View Details</a>
-          </div>
-        </div>
-        <div class="project-content">
-          <h3 class="project-title">Weather Forecast App</h3>
-          <p class="project-description">
-            Beautiful weather app with location-based forecasts, interactive maps, 
-            and customizable widgets.
-          </p>
-          <div class="project-tech">
-            <span class="tech-tag">Flutter</span>
-            <span class="tech-tag">API</span>
-            <span class="tech-tag">Maps</span>
-          </div>
-        </div>
-      </article>
-    </div>
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
     
-    <div class="section-footer">
-      <a href="#" onclick="loadPage('projects')" class="btn btn-outline">View All Projects</a>
-    </div>
-  </div>
-</section>
-
-<!-- Skills Section -->
-<section id="skills" class="skills-section section">
-  <div class="container">
-    <div class="section-header">
-      <h2 class="section-title">Skills & Expertise</h2>
-      <p class="section-subtitle">Technologies and tools I work with</p>
-    </div>
+    <!-- Page-specific CSS (will be loaded dynamically) -->
+    <link rel="stylesheet" id="page-css" href="">
     
-    <div class="skills-content">
-      <div class="skills-category">
-        <h3 class="category-title">Mobile Development</h3>
-        <div class="skills-list">
-          <div class="skill-item">
-            <span class="skill-name">Flutter</span>
-            <div class="skill-level">
-              <div class="skill-progress" style="width: 95%"></div>
-            </div>
-          </div>
-          <div class="skill-item">
-            <span class="skill-name">Dart</span>
-            <div class="skill-level">
-              <div class="skill-progress" style="width: 95%"></div>
-            </div>
-          </div>
-          <div class="skill-item">
-            <span class="skill-name">Android (Native)</span>
-            <div class="skill-level">
-              <div class="skill-progress" style="width: 75%"></div>
-            </div>
-          </div>
-          <div class="skill-item">
-            <span class="skill-name">iOS (Native)</span>
-            <div class="skill-level">
-              <div class="skill-progress" style="width: 65%"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="skills-category">
-        <h3 class="category-title">Backend & Database</h3>
-        <div class="skills-list">
-          <div class="skill-item">
-            <span class="skill-name">Firebase</span>
-            <div class="skill-level">
-              <div class="skill-progress" style="width: 90%"></div>
-            </div>
-          </div>
-          <div class="skill-item">
-            <span class="skill-name">REST APIs</span>
-            <div class="skill-level">
-              <div class="skill-progress" style="width: 85%"></div>
-            </div>
-          </div>
-          <div class="skill-item">
-            <span class="skill-name">SQLite</span>
-            <div class="skill-level">
-              <div class="skill-progress" style="width: 80%"></div>
-            </div>
-          </div>
-          <div class="skill-item">
-            <span class="skill-name">Node.js</span>
-            <div class="skill-level">
-              <div class="skill-progress" style="width: 70%"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="skills-category">
-        <h3 class="category-title">Tools & Others</h3>
-        <div class="skills-list">
-          <div class="skill-item">
-            <span class="skill-name">Git & GitHub</span>
-            <div class="skill-level">
-              <div class="skill-progress" style="width: 90%"></div>
-            </div>
-          </div>
-          <div class="skill-item">
-            <span class="skill-name">Figma</span>
-            <div class="skill-level">
-              <div class="skill-progress" style="width: 80%"></div>
-            </div>
-          </div>
-          <div class="skill-item">
-            <span class="skill-name">App Store Deployment</span>
-            <div class="skill-level">
-              <div class="skill-progress" style="width: 85%"></div>
-            </div>
-          </div>
-          <div class="skill-item">
-            <span class="skill-name">CI/CD</span>
-            <div class="skill-level">
-              <div class="skill-progress" style="width: 75%"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Contact Section -->
-<section id="contact" class="contact-section section">
-  <div class="container">
-    <div class="section-header">
-      <h2 class="section-title">Let's Work Together</h2>
-      <p class="section-subtitle">Ready to bring your mobile app idea to life?</p>
-    </div>
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
     
-    <div class="contact-content">
-      <div class="contact-info">
-        <div class="contact-item">
-          <h3 class="contact-title">Email</h3>
-          <a href="mailto:your.email@example.com" class="contact-link">your.email@example.com</a>
-        </div>
-        <div class="contact-item">
-          <h3 class="contact-title">Location</h3>
-          <p class="contact-text">Your City, Country</p>
-        </div>
-        <div class="contact-item">
-          <h3 class="contact-title">Availability</h3>
-          <p class="contact-text">Available for freelance projects</p>
-        </div>
-      </div>
-      
-      <div class="contact-actions">
-        <a href="mailto:your.email@example.com" class="btn btn-primary">Send Email</a>
-        <div class="social-links">
-          <a href="https://github.com/yourusername" target="_blank" rel="noopener" class="social-link">GitHub</a>
-          <a href="https://linkedin.com/in/yourusername" target="_blank" rel="noopener" class="social-link">LinkedIn</a>
-          <a href="https://twitter.com/yourusername" target="_blank" rel="noopener" class="social-link">Twitter</a>
-        </div>
-      </div>
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Your Name - Flutter Developer">
+    <meta property="og:description" content="Professional Flutter developer creating beautiful mobile applications">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourportfolio.com">
+    <meta property="og:image" content="assets/images/og-image.jpg">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen hidden">
+        <div class="loading-spinner"></div>
     </div>
-  </div>
-</section>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="#" onclick="loadPage('home')" class="logo-link">Your Name</a>
+            </div>
+            
+            <div class="nav-menu" id="nav-menu">
+                <a href="#" onclick="loadPage('home')" class="nav-link active" data-page="home">Home</a>
+                <a href="#" onclick="loadPage('projects')" class="nav-link" data-page="projects">Projects</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#contact" class="nav-link">Contact</a>
+            </div>
+            
+            <div class="nav-toggle" id="nav-toggle">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="main-content" class="main-content">
+        <!-- Hero Section -->
+        <section id="home" class="hero-section">
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-text">
+                        <h1 class="hero-title">
+                            <span class="hero-greeting">Hello, I'm</span>
+                            <span class="hero-name">Your Name</span>
+                        </h1>
+                        <h2 class="hero-subtitle">Flutter Developer</h2>
+                        <p class="hero-description">
+                            I create beautiful, performant mobile applications using Flutter and Dart. 
+                            Passionate about clean code, user experience, and bringing ideas to life 
+                            across iOS and Android platforms.
+                        </p>
+                        <div class="hero-actions">
+                            <a href="#" onclick="loadPage('projects')" class="btn btn-primary">View My Work</a>
+                            <a href="#contact" class="btn btn-secondary">Get In Touch</a>
+                        </div>
+                    </div>
+                    <div class="hero-image">
+                        <div class="hero-image-container">
+                            <img src="assets/images/profile.jpg" alt="Your Name - Flutter Developer" class="profile-image">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hero-scroll">
+                    <a href="#about" class="scroll-indicator">
+                        <span class="scroll-text">Scroll Down</span>
+                        <div class="scroll-arrow"></div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="about-section section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">About Me</h2>
+                    <p class="section-subtitle">Get to know more about my background and expertise</p>
+                </div>
+                
+                <div class="about-content">
+                    <p class="about-paragraph">
+                        As a passionate Flutter developer with over 3 years of experience, I specialize in 
+                        creating cross-platform mobile applications that deliver exceptional user experiences. 
+                        My expertise spans the entire development lifecycle, from concept and design to 
+                        deployment and maintenance.
+                    </p>
+                    <p class="about-paragraph">
+                        I'm proficient in Dart, Firebase, and various state management solutions including 
+                        Provider, Riverpod, and Bloc. I have a strong foundation in UI/UX principles and 
+                        enjoy collaborating with designers to bring pixel-perfect designs to life.
+                    </p>
+                    
+                    <div class="about-highlights">
+                        <div class="highlight-item">
+                            <h3 class="highlight-title">15+</h3>
+                            <p class="highlight-text">Apps Published</p>
+                        </div>
+                        <div class="highlight-item">
+                            <h3 class="highlight-title">3+</h3>
+                            <p class="highlight-text">Years Experience</p>
+                        </div>
+                        <div class="highlight-item">
+                            <h3 class="highlight-title">50K+</h3>
+                            <p class="highlight-text">App Downloads</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Featured Projects Section -->
+        <section id="projects" class="featured-projects-section section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Featured Projects</h2>
+                    <p class="section-subtitle">A showcase of my best Flutter applications</p>
+                </div>
+                
+                <div class="projects-grid">
+                    <!-- Project Card 1 -->
+                    <article class="project-card featured">
+                        <div class="project-image">
+                            <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop&crop=center" alt="E-Commerce App" loading="lazy">
+                            <div class="project-overlay">
+                                <a href="#" onclick="loadProjectDetail('ecommerce-app')" class="project-link">View Details</a>
+                            </div>
+                        </div>
+                        <div class="project-content">
+                            <h3 class="project-title">E-Commerce Mobile App</h3>
+                            <p class="project-description">
+                                Full-featured shopping app with Firebase backend, payment integration, 
+                                and real-time order tracking.
+                            </p>
+                            <div class="project-tech">
+                                <span class="tech-tag">Flutter</span>
+                                <span class="tech-tag">Firebase</span>
+                                <span class="tech-tag">Stripe</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Project Card 2 -->
+                    <article class="project-card featured">
+                        <div class="project-image">
+                            <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop&crop=center" alt="Fitness Tracker App" loading="lazy">
+                            <div class="project-overlay">
+                                <a href="#" onclick="loadProjectDetail('fitness-tracker')" class="project-link">View Details</a>
+                            </div>
+                        </div>
+                        <div class="project-content">
+                            <h3 class="project-title">Fitness Tracker App</h3>
+                            <p class="project-description">
+                                Comprehensive fitness tracking with workout plans, progress monitoring, 
+                                and social features.
+                            </p>
+                            <div class="project-tech">
+                                <span class="tech-tag">Flutter</span>
+                                <span class="tech-tag">SQLite</span>
+                                <span class="tech-tag">Charts</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Project Card 3 -->
+                    <article class="project-card featured">
+                        <div class="project-image">
+                            <img src="https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=600&h=400&fit=crop&crop=center" alt="Weather App" loading="lazy">
+                            <div class="project-overlay">
+                                <a href="#" onclick="loadProjectDetail('weather-app')" class="project-link">View Details</a>
+                            </div>
+                        </div>
+                        <div class="project-content">
+                            <h3 class="project-title">Weather Forecast App</h3>
+                            <p class="project-description">
+                                Beautiful weather app with location-based forecasts, interactive maps, 
+                                and customizable widgets.
+                            </p>
+                            <div class="project-tech">
+                                <span class="tech-tag">Flutter</span>
+                                <span class="tech-tag">API</span>
+                                <span class="tech-tag">Maps</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+                
+                <div class="section-footer">
+                    <a href="#" onclick="loadPage('projects')" class="btn btn-outline">View All Projects</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Skills Section -->
+        <section id="skills" class="skills-section section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Skills & Expertise</h2>
+                    <p class="section-subtitle">Technologies and tools I work with</p>
+                </div>
+                
+                <div class="skills-content">
+                    <div class="skills-category">
+                        <h3 class="category-title">Mobile Development</h3>
+                        <div class="skills-list">
+                            <div class="skill-item">
+                                <span class="skill-name">Flutter</span>
+                                <div class="skill-level">
+                                    <div class="skill-progress" style="width: 95%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-name">Dart</span>
+                                <div class="skill-level">
+                                    <div class="skill-progress" style="width: 95%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-name">Android (Native)</span>
+                                <div class="skill-level">
+                                    <div class="skill-progress" style="width: 75%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-name">iOS (Native)</span>
+                                <div class="skill-level">
+                                    <div class="skill-progress" style="width: 65%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="skills-category">
+                        <h3 class="category-title">Backend & Database</h3>
+                        <div class="skills-list">
+                            <div class="skill-item">
+                                <span class="skill-name">Firebase</span>
+                                <div class="skill-level">
+                                    <div class="skill-progress" style="width: 90%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-name">REST APIs</span>
+                                <div class="skill-level">
+                                    <div class="skill-progress" style="width: 85%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-name">SQLite</span>
+                                <div class="skill-level">
+                                    <div class="skill-progress" style="width: 80%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-name">Node.js</span>
+                                <div class="skill-level">
+                                    <div class="skill-progress" style="width: 70%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="skills-category">
+                        <h3 class="category-title">Tools & Others</h3>
+                        <div class="skills-list">
+                            <div class="skill-item">
+                                <span class="skill-name">Git & GitHub</span>
+                                <div class="skill-level">
+                                    <div class="skill-progress" style="width: 90%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-name">Figma</span>
+                                <div class="skill-level">
+                                    <div class="skill-progress" style="width: 80%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-name">App Store Deployment</span>
+                                <div class="skill-level">
+                                    <div class="skill-progress" style="width: 85%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <span class="skill-name">CI/CD</span>
+                                <div class="skill-level">
+                                    <div class="skill-progress" style="width: 75%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="contact-section section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Let's Work Together</h2>
+                    <p class="section-subtitle">Ready to bring your mobile app idea to life?</p>
+                </div>
+                
+                <div class="contact-content">
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <h3 class="contact-title">Email</h3>
+                            <a href="mailto:your.email@example.com" class="contact-link">your.email@example.com</a>
+                        </div>
+                        <div class="contact-item">
+                            <h3 class="contact-title">Location</h3>
+                            <p class="contact-text">Your City, Country</p>
+                        </div>
+                        <div class="contact-item">
+                            <h3 class="contact-title">Availability</h3>
+                            <p class="contact-text">Available for freelance projects</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-actions">
+                        <a href="mailto:your.email@example.com" class="btn btn-primary">Send Email</a>
+                        <div class="social-links">
+                            <a href="https://github.com/yourusername" target="_blank" rel="noopener" class="social-link">GitHub</a>
+                            <a href="https://linkedin.com/in/yourusername" target="_blank" rel="noopener" class="social-link">LinkedIn</a>
+                            <a href="https://twitter.com/yourusername" target="_blank" rel="noopener" class="social-link">Twitter</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p class="footer-text">© 2025 Your Name. All rights reserved.</p>
+                </div>
+                <div class="footer-center">
+                    <div class="footer-links">
+                        <a href="#" onclick="loadPage('home')" class="footer-link">Home</a>
+                        <a href="#" onclick="loadPage('projects')" class="footer-link">Projects</a>
+                        <a href="#contact" class="footer-link">Contact</a>
+                    </div>
+                </div>
+                <div class="footer-right">
+                    <div class="social-links">
+                        <a href="https://github.com/yourusername" target="_blank" rel="noopener" class="social-link" aria-label="GitHub">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                            </svg>
+                        </a>
+                        <a href="https://linkedin.com/in/yourusername" target="_blank" rel="noopener" class="social-link" aria-label="LinkedIn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                        </a>
+                        <a href="https://twitter.com/yourusername" target="_blank" rel="noopener" class="social-link" aria-label="Twitter">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Core JavaScript -->
+    <script src="js/utils.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/pages/home.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <script src="js/firebase-config.js"></script>
+</body>
+</html>

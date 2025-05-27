@@ -1,5 +1,5 @@
 /**
- * PROJECTS.JS - Projects Page Specific Logic
+ * PROJECTS.JS - Projects Page Logic
  * Portfolio Website - Black & White Minimalistic Theme
  */
 
@@ -9,19 +9,18 @@ const ProjectsPage = {
   projects: [],
   filteredProjects: [],
   currentPage: 1,
-  projectsPerPage: 9,
+  projectsPerPage: 6,
   currentFilters: {
     category: 'all',
     technology: 'all',
     sort: 'latest',
     search: ''
   },
-  viewMode: 'grid', // 'grid', 'list', 'masonry'
-  isLoading: false,
-  animationObserver: null
+  viewMode: 'grid',
+  isLoading: false
 };
 
-// Sample projects data (will be replaced with Firebase data)
+// Enhanced sample projects data
 const sampleProjects = [
   {
     id: 'ecommerce-app',
@@ -30,7 +29,7 @@ const sampleProjects = [
     longDescription: 'A comprehensive e-commerce solution built with Flutter, featuring user authentication, product catalog, shopping cart, payment processing via Stripe, and real-time order tracking. The app includes admin panel for inventory management and sales analytics.',
     category: 'mobile',
     technologies: ['Flutter', 'Firebase', 'Stripe', 'REST API'],
-    images: ['assets/images/projects/ecommerce-1.jpg', 'assets/images/projects/ecommerce-2.jpg'],
+    images: ['https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop'],
     links: {
       github: 'https://github.com/username/ecommerce-app',
       playStore: 'https://play.google.com/store/apps/details?id=com.example.ecommerce',
@@ -39,7 +38,9 @@ const sampleProjects = [
     featured: true,
     status: 'published',
     createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-02-01')
+    updatedAt: new Date('2024-02-01'),
+    downloads: '15K+',
+    rating: 4.8
   },
   {
     id: 'fitness-tracker',
@@ -48,7 +49,7 @@ const sampleProjects = [
     longDescription: 'A complete fitness tracking application with personalized workout plans, exercise library, progress tracking with charts, social features for sharing achievements, and integration with wearable devices.',
     category: 'mobile',
     technologies: ['Flutter', 'SQLite', 'Charts', 'Health APIs'],
-    images: ['assets/images/projects/fitness-1.jpg', 'assets/images/projects/fitness-2.jpg'],
+    images: ['https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop'],
     links: {
       github: 'https://github.com/username/fitness-tracker',
       playStore: 'https://play.google.com/store/apps/details?id=com.example.fitness'
@@ -56,16 +57,18 @@ const sampleProjects = [
     featured: true,
     status: 'published',
     createdAt: new Date('2024-02-10'),
-    updatedAt: new Date('2024-02-20')
+    updatedAt: new Date('2024-02-20'),
+    downloads: '8K+',
+    rating: 4.5
   },
   {
     id: 'weather-app',
     title: 'Weather Forecast App',
     description: 'Beautiful weather app with location-based forecasts, interactive maps, and customizable widgets.',
-    longDescription: 'A modern weather application featuring accurate forecasts, interactive weather maps, customizable home screen widgets, and severe weather alerts. Built with clean architecture and smooth animations.',
+    longDescription: 'A modern weather application featuring accurate forecasts, interactive weather maps, customizable home screen widgets, and severe weather alerts.',
     category: 'mobile',
     technologies: ['Flutter', 'Weather API', 'Maps', 'Widgets'],
-    images: ['assets/images/projects/weather-1.jpg', 'assets/images/projects/weather-2.jpg'],
+    images: ['https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=600&h=400&fit=crop'],
     links: {
       github: 'https://github.com/username/weather-app',
       demo: 'https://weather-demo.example.com'
@@ -73,7 +76,9 @@ const sampleProjects = [
     featured: true,
     status: 'published',
     createdAt: new Date('2024-03-05'),
-    updatedAt: new Date('2024-03-15')
+    updatedAt: new Date('2024-03-15'),
+    downloads: '12K+',
+    rating: 4.7
   },
   {
     id: 'task-manager',
@@ -82,14 +87,16 @@ const sampleProjects = [
     longDescription: 'A powerful task management solution for teams and individuals, featuring project organization, task assignment, progress tracking, deadline notifications, and team collaboration tools.',
     category: 'mobile',
     technologies: ['Flutter', 'Firebase', 'Notifications', 'Cloud Functions'],
-    images: ['assets/images/projects/tasks-1.jpg'],
+    images: ['https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=600&h=400&fit=crop'],
     links: {
       github: 'https://github.com/username/task-manager'
     },
     featured: false,
     status: 'in-development',
     createdAt: new Date('2024-03-20'),
-    updatedAt: new Date('2024-04-01')
+    updatedAt: new Date('2024-04-01'),
+    downloads: 'Coming Soon',
+    rating: null
   },
   {
     id: 'recipe-app',
@@ -98,7 +105,7 @@ const sampleProjects = [
     longDescription: 'A comprehensive recipe application with recipe discovery, ingredient shopping lists, cooking timers, meal planning calendar, and nutritional information tracking.',
     category: 'mobile',
     technologies: ['Flutter', 'Recipe API', 'SQLite', 'Notifications'],
-    images: ['assets/images/projects/recipe-1.jpg'],
+    images: ['https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&h=400&fit=crop'],
     links: {
       github: 'https://github.com/username/recipe-app',
       playStore: 'https://play.google.com/store/apps/details?id=com.example.recipes'
@@ -106,7 +113,9 @@ const sampleProjects = [
     featured: false,
     status: 'published',
     createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-15')
+    updatedAt: new Date('2024-01-15'),
+    downloads: '6K+',
+    rating: 4.3
   },
   {
     id: 'budget-tracker',
@@ -115,24 +124,62 @@ const sampleProjects = [
     longDescription: 'A personal finance management app with expense tracking, budget setting, spending analytics, bill reminders, and financial goal tracking with beautiful charts and insights.',
     category: 'mobile',
     technologies: ['Flutter', 'Charts', 'Local Storage', 'Export'],
-    images: ['assets/images/projects/budget-1.jpg'],
+    images: ['https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&h=400&fit=crop'],
     links: {
       github: 'https://github.com/username/budget-tracker'
     },
     featured: false,
     status: 'completed',
     createdAt: new Date('2023-12-01'),
-    updatedAt: new Date('2023-12-20')
+    updatedAt: new Date('2023-12-20'),
+    downloads: '4K+',
+    rating: 4.1
+  },
+  {
+    id: 'music-player',
+    title: 'Flutter Music Player',
+    description: 'Beautiful music player with custom animations, playlist management, and audio visualization.',
+    longDescription: 'A stunning music player app with custom animations, playlist management, audio visualization, equalizer, and social music sharing features.',
+    category: 'mobile',
+    technologies: ['Flutter', 'Audio Players', 'Animations', 'UI/UX'],
+    images: ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&h=400&fit=crop'],
+    links: {
+      github: 'https://github.com/username/music-player',
+      demo: 'https://music-demo.example.com'
+    },
+    featured: false,
+    status: 'published',
+    createdAt: new Date('2023-11-10'),
+    updatedAt: new Date('2023-11-25'),
+    downloads: '9K+',
+    rating: 4.6
+  },
+  {
+    id: 'quiz-app',
+    title: 'Interactive Quiz App',
+    description: 'Educational quiz application with multiple categories, leaderboards, and progress tracking.',
+    longDescription: 'An engaging quiz application with multiple question categories, real-time leaderboards, progress tracking, achievements system, and social sharing features.',
+    category: 'game',
+    technologies: ['Flutter', 'Firebase', 'Gamification', 'Real-time DB'],
+    images: ['https://images.unsplash.com/photo-1606092195730-5d7b9af1efc5?w=600&h=400&fit=crop'],
+    links: {
+      github: 'https://github.com/username/quiz-app',
+      playStore: 'https://play.google.com/store/apps/details?id=com.example.quiz'
+    },
+    featured: false,
+    status: 'published',
+    createdAt: new Date('2023-10-05'),
+    updatedAt: new Date('2023-10-20'),
+    downloads: '11K+',
+    rating: 4.4
   }
 ];
 
 /**
- * Initialize projects page when content is loaded
+ * Initialize projects page when DOM is loaded
  */
 document.addEventListener('DOMContentLoaded', function() {
-  if (window.App?.currentPage === 'projects') {
-    setTimeout(initializeProjectsPage, 100);
-  }
+  initializeProjectsPage();
 });
 
 /**
@@ -155,36 +202,36 @@ function initializeProjectsPage() {
   // Initialize view toggle
   initializeViewToggle();
   
-  // Initialize pagination
-  initializePagination();
-  
   // Initialize scroll animations
   initializeProjectsAnimations();
-  
-  // Render initial projects
-  renderProjects();
   
   ProjectsPage.isInitialized = true;
   console.log('Projects page initialized successfully');
 }
 
 /**
- * Load projects data (from Firebase in production)
+ * Load projects data
  */
 async function loadProjectsData() {
   try {
     ProjectsPage.isLoading = true;
     showLoadingState();
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Simulate loading delay for better UX
+    await new Promise(resolve => setTimeout(resolve, 800));
     
-    // In production, this would fetch from Firebase
+    // Use sample data (in production, this would fetch from Firebase)
     ProjectsPage.projects = [...sampleProjects];
     ProjectsPage.filteredProjects = [...sampleProjects];
     
     ProjectsPage.isLoading = false;
     hideLoadingState();
+    
+    // Populate filter options
+    populateFilterOptions();
+    
+    // Render initial projects
+    renderProjects();
     
   } catch (error) {
     console.error('Error loading projects:', error);
@@ -212,9 +259,6 @@ function initializeFilters() {
   if (sortFilter) {
     sortFilter.addEventListener('change', handleFilterChange);
   }
-  
-  // Populate filter options based on available data
-  populateFilterOptions();
 }
 
 /**
@@ -227,26 +271,16 @@ function populateFilterOptions() {
   if (categoryFilter && ProjectsPage.projects.length > 0) {
     const categories = [...new Set(ProjectsPage.projects.map(p => p.category))];
     
-    // Clear existing options except "All"
-    const allOption = categoryFilter.querySelector('option[value="all"]');
-    categoryFilter.innerHTML = '';
-    categoryFilter.appendChild(allOption);
-    
     categories.forEach(category => {
       const option = document.createElement('option');
       option.value = category;
-      option.textContent = Utils.string.capitalize(category);
+      option.textContent = capitalizeFirst(category);
       categoryFilter.appendChild(option);
     });
   }
   
   if (techFilter && ProjectsPage.projects.length > 0) {
     const technologies = [...new Set(ProjectsPage.projects.flatMap(p => p.technologies))];
-    
-    // Clear existing options except "All"
-    const allOption = techFilter.querySelector('option[value="all"]');
-    techFilter.innerHTML = '';
-    techFilter.appendChild(allOption);
     
     technologies.forEach(tech => {
       const option = document.createElement('option');
@@ -259,16 +293,15 @@ function populateFilterOptions() {
 
 /**
  * Handle filter changes
- * @param {Event} event - Filter change event
  */
 function handleFilterChange(event) {
-  const filterType = event.target.id.replace('Filter', '');
+  const filterType = event.target.id.replace('Filter', '').replace('tech', 'technology');
   const filterValue = event.target.value;
   
-  ProjectsPage.currentFilters[filterType === 'tech' ? 'technology' : filterType] = filterValue;
+  ProjectsPage.currentFilters[filterType] = filterValue;
   
   // Add visual feedback
-  event.target.classList.toggle('active', filterValue !== 'all');
+  event.target.classList.toggle('active', filterValue !== 'all' && filterValue !== 'latest');
   
   // Apply filters
   applyFilters();
@@ -278,9 +311,6 @@ function handleFilterChange(event) {
   
   // Re-render projects
   renderProjects();
-  
-  // Update URL
-  updateURL();
 }
 
 /**
@@ -288,43 +318,20 @@ function handleFilterChange(event) {
  */
 function initializeSearch() {
   const searchInput = document.getElementById('searchInput');
-  const searchBox = document.querySelector('.search-box');
   
   if (!searchInput) return;
   
   // Debounced search function
-  const debouncedSearch = Utils.animation.debounce(handleSearch, 300);
+  const debouncedSearch = debounce(handleSearch, 300);
   
   searchInput.addEventListener('input', function(event) {
     const query = event.target.value.trim();
-    
-    // Toggle clear button visibility
-    searchBox.classList.toggle('has-value', query.length > 0);
-    
     debouncedSearch(query);
-  });
-  
-  // Clear search functionality
-  searchBox.addEventListener('click', function(event) {
-    if (event.target === searchBox.querySelector('::after')) {
-      searchInput.value = '';
-      searchBox.classList.remove('has-value');
-      handleSearch('');
-    }
-  });
-  
-  // Handle search on Enter key
-  searchInput.addEventListener('keydown', function(event) {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      handleSearch(event.target.value.trim());
-    }
   });
 }
 
 /**
  * Handle search functionality
- * @param {string} query - Search query
  */
 function handleSearch(query) {
   ProjectsPage.currentFilters.search = query;
@@ -337,12 +344,6 @@ function handleSearch(query) {
   
   // Re-render projects
   renderProjects();
-  
-  // Update URL
-  updateURL();
-  
-  // Announce results to screen readers
-  announceSearchResults();
 }
 
 /**
@@ -383,9 +384,6 @@ function applyFilters() {
 
 /**
  * Sort projects based on criteria
- * @param {Array} projects - Projects to sort
- * @param {string} sortBy - Sort criteria
- * @returns {Array} Sorted projects
  */
 function sortProjects(projects, sortBy) {
   switch (sortBy) {
@@ -424,28 +422,9 @@ function initializeViewToggle() {
         
         // Re-render with new view
         renderProjects();
-        
-        // Save preference
-        Utils.storage.set('preferredView', newView);
       }
     });
   });
-  
-  // Load saved preference
-  const savedView = Utils.storage.get('preferredView', 'grid');
-  if (savedView !== ProjectsPage.viewMode) {
-    const viewButton = document.querySelector(`[data-view="${savedView}"]`);
-    if (viewButton) {
-      viewButton.click();
-    }
-  }
-}
-
-/**
- * Initialize pagination
- */
-function initializePagination() {
-  // Pagination will be rendered dynamically with projects
 }
 
 /**
@@ -453,7 +432,6 @@ function initializePagination() {
  */
 function renderProjects() {
   const projectsGrid = document.getElementById('projectsGrid');
-  const resultsInfo = document.querySelector('.results-info');
   
   if (!projectsGrid) return;
   
@@ -478,74 +456,64 @@ function renderProjects() {
   
   // Render pagination
   renderPagination();
-  
-  // Initialize animations for new elements
-  setTimeout(initializeProjectCardAnimations, 100);
 }
 
 /**
  * Update results information
  */
 function updateResultsInfo() {
-  const resultsInfo = document.querySelector('.results-info');
-  if (!resultsInfo) return;
-  
-  const totalResults = ProjectsPage.filteredProjects.length;
-  const resultsCount = resultsInfo.querySelector('.results-count');
+  const resultsCount = document.querySelector('.results-count');
   
   if (resultsCount) {
+    const totalResults = ProjectsPage.filteredProjects.length;
     resultsCount.textContent = `${totalResults} project${totalResults !== 1 ? 's' : ''} found`;
   }
 }
 
 /**
  * Render individual project cards
- * @param {Element} container - Container element
- * @param {Array} projects - Projects to render
  */
 function renderProjectCards(container, projects) {
   const cardsHTML = projects.map(project => createProjectCardHTML(project)).join('');
   
-  // Animate out old cards
-  const existingCards = container.querySelectorAll('.project-card');
-  existingCards.forEach(card => {
-    card.classList.add('filtering-out');
-  });
+  // Add fade-in animation
+  container.style.opacity = '0';
+  container.innerHTML = cardsHTML;
   
-  // Replace content after animation
   setTimeout(() => {
-    container.innerHTML = cardsHTML;
+    container.style.transition = 'opacity 0.3s ease';
+    container.style.opacity = '1';
     
-    // Animate in new cards
-    const newCards = container.querySelectorAll('.project-card');
-    newCards.forEach((card, index) => {
+    // Initialize card animations
+    const cards = container.querySelectorAll('.project-card');
+    cards.forEach((card, index) => {
       card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      
       setTimeout(() => {
-        card.classList.add('filtering-in');
+        card.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
         card.style.opacity = '1';
-      }, index * 50);
+        card.style.transform = 'translateY(0)';
+      }, index * 100);
     });
-  }, 200);
+  }, 100);
 }
 
 /**
  * Create HTML for individual project card
- * @param {Object} project - Project data
- * @returns {string} HTML string
  */
 function createProjectCardHTML(project) {
   const techTags = project.technologies.map(tech => 
     `<span class="tech-tag">${tech}</span>`
   ).join('');
   
-  const statusClass = project.status.replace('-', '-');
-  const formattedDate = Utils.date.format(project.createdAt);
+  const statusClass = project.status.replace('-', '');
+  const formattedDate = formatDate(project.createdAt);
   
   return `
     <article class="project-card ${project.featured ? 'featured' : ''}" data-project-id="${project.id}">
       <div class="project-image">
-        <img src="${project.images[0] || 'assets/images/project-placeholder.jpg'}" 
-             alt="${project.title}" loading="lazy">
+        <img src="${project.images[0]}" alt="${project.title}" loading="lazy">
         <div class="project-overlay">
           <a href="#" onclick="loadProjectDetail('${project.id}')" class="project-link">View Details</a>
         </div>
@@ -556,7 +524,11 @@ function createProjectCardHTML(project) {
         <div class="project-tech">${techTags}</div>
         <div class="project-meta">
           <span class="project-date">${formattedDate}</span>
-          <span class="project-status ${statusClass}">${project.status.replace('-', ' ')}</span>
+          <span class="project-status ${statusClass}">${capitalizeFirst(project.status.replace('-', ' '))}</span>
+        </div>
+        <div class="project-stats">
+          ${project.downloads ? `<span class="project-downloads">📱 ${project.downloads}</span>` : ''}
+          ${project.rating ? `<span class="project-rating">⭐ ${project.rating}</span>` : ''}
         </div>
         <div class="project-actions">
           ${project.links.github ? `<a href="${project.links.github}" target="_blank" class="project-action">GitHub</a>` : ''}
@@ -570,23 +542,16 @@ function createProjectCardHTML(project) {
 
 /**
  * Render no results state
- * @param {Element} container - Container element
  */
 function renderNoResults(container) {
-  const hasActiveFilters = Object.values(ProjectsPage.currentFilters).some(filter => 
-    filter !== 'all' && filter !== 'latest' && filter !== ''
-  );
-  
   container.innerHTML = `
     <div class="no-results">
       <div class="no-results-icon">🔍</div>
       <h3 class="no-results-title">No projects found</h3>
       <p class="no-results-text">
-        ${hasActiveFilters ? 
-          'Try adjusting your filters or search terms to find more projects.' : 
-          'No projects are currently available.'}
+        Try adjusting your filters or search terms to find more projects.
       </p>
-      ${hasActiveFilters ? '<button class="clear-filters-btn" onclick="clearAllFilters()">Clear Filters</button>' : ''}
+      <button class="clear-filters-btn" onclick="clearAllFilters()">Clear Filters</button>
     </div>
   `;
 }
@@ -618,30 +583,13 @@ function renderPagination() {
   `;
   
   // Page numbers
-  const startPage = Math.max(1, ProjectsPage.currentPage - 2);
-  const endPage = Math.min(totalPages, ProjectsPage.currentPage + 2);
-  
-  if (startPage > 1) {
-    paginationHTML += `<button class="pagination-btn" onclick="changePage(1)">1</button>`;
-    if (startPage > 2) {
-      paginationHTML += `<span class="pagination-ellipsis">...</span>`;
-    }
-  }
-  
-  for (let i = startPage; i <= endPage; i++) {
+  for (let i = 1; i <= Math.min(totalPages, 5); i++) {
     paginationHTML += `
       <button class="pagination-btn ${i === ProjectsPage.currentPage ? 'active' : ''}" 
               onclick="changePage(${i})">
         ${i}
       </button>
     `;
-  }
-  
-  if (endPage < totalPages) {
-    if (endPage < totalPages - 1) {
-      paginationHTML += `<span class="pagination-ellipsis">...</span>`;
-    }
-    paginationHTML += `<button class="pagination-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
   }
   
   // Next button
@@ -653,22 +601,11 @@ function renderPagination() {
     </button>
   `;
   
-  // Page info
-  const startItem = (ProjectsPage.currentPage - 1) * ProjectsPage.projectsPerPage + 1;
-  const endItem = Math.min(ProjectsPage.currentPage * ProjectsPage.projectsPerPage, totalProjects);
-  
-  paginationHTML += `
-    <span class="pagination-info">
-      Showing ${startItem}-${endItem} of ${totalProjects}
-    </span>
-  `;
-  
   paginationContainer.innerHTML = paginationHTML;
 }
 
 /**
  * Change current page
- * @param {number} page - Target page number
  */
 function changePage(page) {
   const totalPages = Math.ceil(ProjectsPage.filteredProjects.length / ProjectsPage.projectsPerPage);
@@ -679,12 +616,11 @@ function changePage(page) {
   
   ProjectsPage.currentPage = page;
   renderProjects();
-  updateURL();
   
   // Scroll to top of projects
   const projectsSection = document.querySelector('.projects-page');
   if (projectsSection) {
-    const navbarHeight = window.Layout ? window.Layout.getNavbarHeight() : 70;
+    const navbarHeight = 70;
     const targetPosition = projectsSection.offsetTop - navbarHeight;
     
     window.scrollTo({
@@ -728,52 +664,12 @@ function clearAllFilters() {
   
   if (searchInput) {
     searchInput.value = '';
-    document.querySelector('.search-box').classList.remove('has-value');
   }
   
   // Apply filters and re-render
   applyFilters();
   ProjectsPage.currentPage = 1;
   renderProjects();
-  updateURL();
-}
-
-/**
- * Initialize project card animations
- */
-function initializeProjectCardAnimations() {
-  if (!window.IntersectionObserver) return;
-  
-  const cards = document.querySelectorAll('.project-card');
-  
-  cards.forEach((card, index) => {
-    card.style.animationDelay = `${index * 0.1}s`;
-  });
-}
-
-/**
- * Initialize scroll animations for projects page
- */
-function initializeProjectsAnimations() {
-  if (!window.IntersectionObserver) return;
-  
-  ProjectsPage.animationObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('animate');
-        ProjectsPage.animationObserver.unobserve(entry.target);
-      }
-    });
-  }, {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-  });
-  
-  // Observe filter container and other elements
-  const filterContainer = document.querySelector('.filter-container');
-  if (filterContainer) {
-    ProjectsPage.animationObserver.observe(filterContainer);
-  }
 }
 
 /**
@@ -781,24 +677,28 @@ function initializeProjectsAnimations() {
  */
 function showLoadingState() {
   const projectsGrid = document.getElementById('projectsGrid');
-  if (!projectsGrid) return;
+  const resultsCount = document.querySelector('.results-count');
   
-  projectsGrid.className = 'loading-projects';
-  projectsGrid.innerHTML = Array(6).fill(0).map(() => `
-    <div class="project-skeleton">
-      <div class="skeleton-image"></div>
-      <div class="skeleton-content">
-        <div class="skeleton-title"></div>
-        <div class="skeleton-description"></div>
-        <div class="skeleton-description"></div>
-        <div class="skeleton-tags">
-          <div class="skeleton-tag"></div>
-          <div class="skeleton-tag"></div>
-          <div class="skeleton-tag"></div>
+  if (resultsCount) {
+    resultsCount.textContent = 'Loading projects...';
+  }
+  
+  if (projectsGrid) {
+    projectsGrid.innerHTML = Array(6).fill(0).map(() => `
+      <div class="project-skeleton">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-title"></div>
+          <div class="skeleton-description"></div>
+          <div class="skeleton-description"></div>
+          <div class="skeleton-tags">
+            <div class="skeleton-tag"></div>
+            <div class="skeleton-tag"></div>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
+  }
 }
 
 /**
@@ -813,124 +713,96 @@ function hideLoadingState() {
  */
 function showErrorState() {
   const projectsGrid = document.getElementById('projectsGrid');
-  if (!projectsGrid) return;
+  const resultsCount = document.querySelector('.results-count');
   
-  projectsGrid.innerHTML = `
-    <div class="error-state">
-      <h3>Unable to load projects</h3>
-      <p>Please try again later or check your connection.</p>
-      <button class="btn btn-primary" onclick="initializeProjectsPage()">Retry</button>
-    </div>
-  `;
+  if (resultsCount) {
+    resultsCount.textContent = 'Error loading projects';
+  }
+  
+  if (projectsGrid) {
+    projectsGrid.innerHTML = `
+      <div class="error-state">
+        <h3>Unable to load projects</h3>
+        <p>Please try again later or check your connection.</p>
+        <button class="btn btn-primary" onclick="loadProjectsData()">Retry</button>
+      </div>
+    `;
+  }
 }
 
 /**
- * Update URL with current filters (for bookmarking/sharing)
+ * Initialize scroll animations
  */
-function updateURL() {
-  const params = new URLSearchParams();
+function initializeProjectsAnimations() {
+  if (!window.IntersectionObserver) return;
   
-  Object.entries(ProjectsPage.currentFilters).forEach(([key, value]) => {
-    if (value && value !== 'all' && value !== 'latest' && value !== '') {
-      params.set(key, value);
-    }
+  const animationObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '0';
+        entry.target.style.transform = 'translateY(30px)';
+        entry.target.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        
+        setTimeout(() => {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }, 100);
+        
+        animationObserver.unobserve(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
   });
   
-  if (ProjectsPage.currentPage > 1) {
-    params.set('page', ProjectsPage.currentPage);
+  // Observe filter container
+  const filterContainer = document.querySelector('.filter-container');
+  if (filterContainer) {
+    animationObserver.observe(filterContainer);
   }
-  
-  if (ProjectsPage.viewMode !== 'grid') {
-    params.set('view', ProjectsPage.viewMode);
-  }
-  
-  const url = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
-  history.replaceState(null, '', url);
 }
 
 /**
- * Load state from URL parameters
+ * Utility functions
  */
-function loadFromURL() {
-  const params = new URLSearchParams(window.location.search);
-  
-  // Load filters
-  Object.keys(ProjectsPage.currentFilters).forEach(key => {
-    const value = params.get(key);
-    if (value) {
-      ProjectsPage.currentFilters[key] = value;
-    }
+function capitalizeFirst(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function formatDate(date) {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
   });
-  
-  // Load page
-  const page = parseInt(params.get('page')) || 1;
-  ProjectsPage.currentPage = page;
-  
-  // Load view mode
-  const view = params.get('view') || 'grid';
-  ProjectsPage.viewMode = view;
-  
-  // Update form elements
-  updateFormElements();
+}
+
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 }
 
 /**
- * Update form elements to match current filters
+ * Load specific project detail (placeholder for now)
  */
-function updateFormElements() {
-  const categoryFilter = document.getElementById('categoryFilter');
-  const techFilter = document.getElementById('techFilter');
-  const sortFilter = document.getElementById('sortFilter');
-  const searchInput = document.getElementById('searchInput');
-  
-  if (categoryFilter) {
-    categoryFilter.value = ProjectsPage.currentFilters.category;
+function loadProjectDetail(projectId) {
+  const project = ProjectsPage.projects.find(p => p.id === projectId);
+  if (project) {
+    alert(`Loading details for: ${project.title}\n\nThis will be implemented in the next step!`);
   }
-  
-  if (techFilter) {
-    techFilter.value = ProjectsPage.currentFilters.technology;
-  }
-  
-  if (sortFilter) {
-    sortFilter.value = ProjectsPage.currentFilters.sort;
-  }
-  
-  if (searchInput) {
-    searchInput.value = ProjectsPage.currentFilters.search;
-  }
-}
-
-/**
- * Announce search results to screen readers
- */
-function announceSearchResults() {
-  const announcement = document.querySelector('.sr-announcement') || 
-    Utils.dom.createElement('div', { className: 'sr-announcement', 'aria-live': 'polite' });
-  
-  const count = ProjectsPage.filteredProjects.length;
-  announcement.textContent = `${count} project${count !== 1 ? 's' : ''} found`;
-  
-  if (!announcement.parentNode) {
-    document.body.appendChild(announcement);
-  }
-}
-
-/**
- * Cleanup projects page
- */
-function cleanupProjectsPage() {
-  if (ProjectsPage.animationObserver) {
-    ProjectsPage.animationObserver.disconnect();
-  }
-  
-  ProjectsPage.isInitialized = false;
-  console.log('Projects page cleaned up');
 }
 
 // Export functions for global access
 window.ProjectsPage = {
   initialize: initializeProjectsPage,
-  cleanup: cleanupProjectsPage,
   changePage,
   clearAllFilters
 };
@@ -938,3 +810,4 @@ window.ProjectsPage = {
 // Make functions available globally for onclick handlers
 window.changePage = changePage;
 window.clearAllFilters = clearAllFilters;
+window.loadProjectDetail = loadProjectDetail;
