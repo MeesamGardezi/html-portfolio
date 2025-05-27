@@ -5,13 +5,13 @@
  */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDW8SlsBmfMZCSuKb9zVVtQb12KKYxXEUg",
-  authDomain: "mesogportfolio.firebaseapp.com",
-  projectId: "mesogportfolio",
-  storageBucket: "mesogportfolio.firebasestorage.app",
-  messagingSenderId: "480773623339",
-  appId: "1:480773623339:web:639712fd33e5d62a4aa46e",
-  measurementId: "G-0WVCT3MY0P"
+  apiKey: "AIzaSyCBUX2wKjdwYSw61T5_xGONXj34j5C5q2I",
+  authDomain: "mesog-portfolio.firebaseapp.com",
+  projectId: "mesog-portfolio",
+  storageBucket: "mesog-portfolio.firebasestorage.app",
+  messagingSenderId: "364503690658",
+  appId: "1:364503690658:web:cf39d35305364365ed16fb",
+  measurementId: "G-WYZYKX4RJL"
 };
 
 // Firebase services

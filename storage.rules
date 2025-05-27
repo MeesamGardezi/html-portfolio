@@ -1,0 +1,70 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Project images - Public read, Admin write
+    match /projects/{allPaths=**} {
+      // Allow anyone to read project images
+      allow read: if true;
+      
+      // Allow authenticated admin to upload/delete project images
+      allow write: if request.auth != null 
+        && request.auth.token.email_verified == true
+        && request.resource.size < 5 * 1024 * 1024  // 5MB limit
+        && request.resource.contentType.matches('image/.*');
+      
+      // Allow admin to delete project images
+      allow delete: if request.auth != null && request.auth.token.email_verified == true;
+    }
+    
+    // Profile images - Public read, Admin write
+    match /profile/{allPaths=**} {
+      // Allow anyone to read profile images
+      allow read: if true;
+      
+      // Allow authenticated admin to upload/update profile images
+      allow write: if request.auth != null 
+        && request.auth.token.email_verified == true
+        && request.resource.size < 2 * 1024 * 1024  // 2MB limit for profile images
+        && request.resource.contentType.matches('image/.*');
+      
+      // Allow admin to delete profile images
+      allow delete: if request.auth != null && request.auth.token.email_verified == true;
+    }
+    
+    // Assets and general files - Public read, Admin write
+    match /assets/{allPaths=**} {
+      // Allow anyone to read assets (icons, general images, etc.)
+      allow read: if true;
+      
+      // Allow authenticated admin to manage assets
+      allow write: if request.auth != null 
+        && request.auth.token.email_verified == true
+        && request.resource.size < 10 * 1024 * 1024;  // 10MB limit for general assets
+      
+      // Allow admin to delete assets
+      allow delete: if request.auth != null && request.auth.token.email_verified == true;
+    }
+    
+    // Temporary uploads - Admin only, auto-cleanup
+    match /temp/{allPaths=**} {
+      // Allow admin to upload temporary files
+      allow read, write: if request.auth != null 
+        && request.auth.token.email_verified == true
+        && request.resource.size < 5 * 1024 * 1024;  // 5MB limit
+      
+      // Allow admin to delete temp files
+      allow delete: if request.auth != null && request.auth.token.email_verified == true;
+    }
+    
+    // Backup folder - Admin only
+    match /backups/{allPaths=**} {
+      allow read, write, delete: if request.auth != null && request.auth.token.email_verified == true;
+    }
+    
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

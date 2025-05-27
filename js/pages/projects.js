@@ -1,5 +1,5 @@
 /**
- * PROJECTS.JS - Projects Page Logic
+ * PROJECTS.JS - Projects Page Logic with Firebase Integration
  * Portfolio Website - Black & White Minimalistic Theme
  */
 
@@ -20,161 +20,6 @@ const ProjectsPage = {
   isLoading: false
 };
 
-// Enhanced sample projects data
-const sampleProjects = [
-  {
-    id: 'ecommerce-app',
-    title: 'E-Commerce Mobile App',
-    description: 'Full-featured shopping app with Firebase backend, payment integration, and real-time order tracking.',
-    longDescription: 'A comprehensive e-commerce solution built with Flutter, featuring user authentication, product catalog, shopping cart, payment processing via Stripe, and real-time order tracking. The app includes admin panel for inventory management and sales analytics.',
-    category: 'mobile',
-    technologies: ['Flutter', 'Firebase', 'Stripe', 'REST API'],
-    images: ['https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop'],
-    links: {
-      github: 'https://github.com/username/ecommerce-app',
-      playStore: 'https://play.google.com/store/apps/details?id=com.example.ecommerce',
-      demo: 'https://demo.example.com'
-    },
-    featured: true,
-    status: 'published',
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-02-01'),
-    downloads: '15K+',
-    rating: 4.8
-  },
-  {
-    id: 'fitness-tracker',
-    title: 'Fitness Tracker App',
-    description: 'Comprehensive fitness tracking with workout plans, progress monitoring, and social features.',
-    longDescription: 'A complete fitness tracking application with personalized workout plans, exercise library, progress tracking with charts, social features for sharing achievements, and integration with wearable devices.',
-    category: 'mobile',
-    technologies: ['Flutter', 'SQLite', 'Charts', 'Health APIs'],
-    images: ['https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop'],
-    links: {
-      github: 'https://github.com/username/fitness-tracker',
-      playStore: 'https://play.google.com/store/apps/details?id=com.example.fitness'
-    },
-    featured: true,
-    status: 'published',
-    createdAt: new Date('2024-02-10'),
-    updatedAt: new Date('2024-02-20'),
-    downloads: '8K+',
-    rating: 4.5
-  },
-  {
-    id: 'weather-app',
-    title: 'Weather Forecast App',
-    description: 'Beautiful weather app with location-based forecasts, interactive maps, and customizable widgets.',
-    longDescription: 'A modern weather application featuring accurate forecasts, interactive weather maps, customizable home screen widgets, and severe weather alerts.',
-    category: 'mobile',
-    technologies: ['Flutter', 'Weather API', 'Maps', 'Widgets'],
-    images: ['https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=600&h=400&fit=crop'],
-    links: {
-      github: 'https://github.com/username/weather-app',
-      demo: 'https://weather-demo.example.com'
-    },
-    featured: true,
-    status: 'published',
-    createdAt: new Date('2024-03-05'),
-    updatedAt: new Date('2024-03-15'),
-    downloads: '12K+',
-    rating: 4.7
-  },
-  {
-    id: 'task-manager',
-    title: 'Task Management App',
-    description: 'Productive task management with team collaboration, project tracking, and deadline notifications.',
-    longDescription: 'A powerful task management solution for teams and individuals, featuring project organization, task assignment, progress tracking, deadline notifications, and team collaboration tools.',
-    category: 'mobile',
-    technologies: ['Flutter', 'Firebase', 'Notifications', 'Cloud Functions'],
-    images: ['https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=600&h=400&fit=crop'],
-    links: {
-      github: 'https://github.com/username/task-manager'
-    },
-    featured: false,
-    status: 'in-development',
-    createdAt: new Date('2024-03-20'),
-    updatedAt: new Date('2024-04-01'),
-    downloads: 'Coming Soon',
-    rating: null
-  },
-  {
-    id: 'recipe-app',
-    title: 'Recipe Discovery App',
-    description: 'Discover and save recipes with ingredient lists, cooking timers, and meal planning features.',
-    longDescription: 'A comprehensive recipe application with recipe discovery, ingredient shopping lists, cooking timers, meal planning calendar, and nutritional information tracking.',
-    category: 'mobile',
-    technologies: ['Flutter', 'Recipe API', 'SQLite', 'Notifications'],
-    images: ['https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&h=400&fit=crop'],
-    links: {
-      github: 'https://github.com/username/recipe-app',
-      playStore: 'https://play.google.com/store/apps/details?id=com.example.recipes'
-    },
-    featured: false,
-    status: 'published',
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-15'),
-    downloads: '6K+',
-    rating: 4.3
-  },
-  {
-    id: 'budget-tracker',
-    title: 'Personal Budget Tracker',
-    description: 'Track expenses, set budgets, and visualize spending patterns with detailed analytics.',
-    longDescription: 'A personal finance management app with expense tracking, budget setting, spending analytics, bill reminders, and financial goal tracking with beautiful charts and insights.',
-    category: 'mobile',
-    technologies: ['Flutter', 'Charts', 'Local Storage', 'Export'],
-    images: ['https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&h=400&fit=crop'],
-    links: {
-      github: 'https://github.com/username/budget-tracker'
-    },
-    featured: false,
-    status: 'completed',
-    createdAt: new Date('2023-12-01'),
-    updatedAt: new Date('2023-12-20'),
-    downloads: '4K+',
-    rating: 4.1
-  },
-  {
-    id: 'music-player',
-    title: 'Flutter Music Player',
-    description: 'Beautiful music player with custom animations, playlist management, and audio visualization.',
-    longDescription: 'A stunning music player app with custom animations, playlist management, audio visualization, equalizer, and social music sharing features.',
-    category: 'mobile',
-    technologies: ['Flutter', 'Audio Players', 'Animations', 'UI/UX'],
-    images: ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&h=400&fit=crop'],
-    links: {
-      github: 'https://github.com/username/music-player',
-      demo: 'https://music-demo.example.com'
-    },
-    featured: false,
-    status: 'published',
-    createdAt: new Date('2023-11-10'),
-    updatedAt: new Date('2023-11-25'),
-    downloads: '9K+',
-    rating: 4.6
-  },
-  {
-    id: 'quiz-app',
-    title: 'Interactive Quiz App',
-    description: 'Educational quiz application with multiple categories, leaderboards, and progress tracking.',
-    longDescription: 'An engaging quiz application with multiple question categories, real-time leaderboards, progress tracking, achievements system, and social sharing features.',
-    category: 'game',
-    technologies: ['Flutter', 'Firebase', 'Gamification', 'Real-time DB'],
-    images: ['https://images.unsplash.com/photo-1606092195730-5d7b9af1efc5?w=600&h=400&fit=crop'],
-    links: {
-      github: 'https://github.com/username/quiz-app',
-      playStore: 'https://play.google.com/store/apps/details?id=com.example.quiz'
-    },
-    featured: false,
-    status: 'published',
-    createdAt: new Date('2023-10-05'),
-    updatedAt: new Date('2023-10-20'),
-    downloads: '11K+',
-    rating: 4.4
-  }
-];
-
 /**
  * Initialize projects page when DOM is loaded
  */
@@ -190,7 +35,7 @@ function initializeProjectsPage() {
   
   console.log('Initializing projects page...');
   
-  // Load projects data
+  // Load projects data from Firebase
   loadProjectsData();
   
   // Initialize filters
@@ -205,33 +50,56 @@ function initializeProjectsPage() {
   // Initialize scroll animations
   initializeProjectsAnimations();
   
+  // Track page view
+  trackPageView('projects');
+  
   ProjectsPage.isInitialized = true;
   console.log('Projects page initialized successfully');
 }
 
 /**
- * Load projects data
+ * Load projects data from Firebase
  */
 async function loadProjectsData() {
   try {
     ProjectsPage.isLoading = true;
     showLoadingState();
     
-    // Simulate loading delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Wait for Firebase to initialize
+    if (typeof firebase === 'undefined') {
+      setTimeout(loadProjectsData, 1000);
+      return;
+    }
     
-    // Use sample data (in production, this would fetch from Firebase)
-    ProjectsPage.projects = [...sampleProjects];
-    ProjectsPage.filteredProjects = [...sampleProjects];
+    // Load projects from Firestore
+    const snapshot = await firebase.firestore()
+      .collection('projects')
+      .where('status', 'in', ['published', 'completed'])
+      .orderBy('createdAt', 'desc')
+      .get();
     
+    ProjectsPage.projects = [];
+    snapshot.forEach((doc) => {
+      ProjectsPage.projects.push({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate(),
+        updatedAt: doc.data().updatedAt?.toDate()
+      });
+    });
+    
+    ProjectsPage.filteredProjects = [...ProjectsPage.projects];
     ProjectsPage.isLoading = false;
+    
     hideLoadingState();
     
-    // Populate filter options
+    // Populate filter options based on real data
     populateFilterOptions();
     
-    // Render initial projects
+    // Render projects
     renderProjects();
+    
+    console.log(`Loaded ${ProjectsPage.projects.length} projects from Firebase`);
     
   } catch (error) {
     console.error('Error loading projects:', error);
@@ -262,14 +130,19 @@ function initializeFilters() {
 }
 
 /**
- * Populate filter options dynamically
+ * Populate filter options dynamically based on loaded projects
  */
 function populateFilterOptions() {
   const categoryFilter = document.getElementById('categoryFilter');
   const techFilter = document.getElementById('techFilter');
   
   if (categoryFilter && ProjectsPage.projects.length > 0) {
-    const categories = [...new Set(ProjectsPage.projects.map(p => p.category))];
+    // Clear existing options (except "All Categories")
+    const existingOptions = categoryFilter.querySelectorAll('option:not(:first-child)');
+    existingOptions.forEach(option => option.remove());
+    
+    // Get unique categories
+    const categories = [...new Set(ProjectsPage.projects.map(p => p.category))].filter(Boolean);
     
     categories.forEach(category => {
       const option = document.createElement('option');
@@ -280,7 +153,12 @@ function populateFilterOptions() {
   }
   
   if (techFilter && ProjectsPage.projects.length > 0) {
-    const technologies = [...new Set(ProjectsPage.projects.flatMap(p => p.technologies))];
+    // Clear existing options (except "All Technologies")
+    const existingOptions = techFilter.querySelectorAll('option:not(:first-child)');
+    existingOptions.forEach(option => option.remove());
+    
+    // Get unique technologies
+    const technologies = [...new Set(ProjectsPage.projects.flatMap(p => p.technologies || []))].filter(Boolean);
     
     technologies.forEach(tech => {
       const option = document.createElement('option');
@@ -360,7 +238,7 @@ function applyFilters() {
   // Technology filter
   if (ProjectsPage.currentFilters.technology !== 'all') {
     filtered = filtered.filter(project => 
-      project.technologies.some(tech => 
+      project.technologies && project.technologies.some(tech => 
         tech.toLowerCase() === ProjectsPage.currentFilters.technology
       )
     );
@@ -370,9 +248,9 @@ function applyFilters() {
   if (ProjectsPage.currentFilters.search) {
     const query = ProjectsPage.currentFilters.search.toLowerCase();
     filtered = filtered.filter(project =>
-      project.title.toLowerCase().includes(query) ||
-      project.description.toLowerCase().includes(query) ||
-      project.technologies.some(tech => tech.toLowerCase().includes(query))
+      project.title?.toLowerCase().includes(query) ||
+      project.description?.toLowerCase().includes(query) ||
+      (project.technologies && project.technologies.some(tech => tech.toLowerCase().includes(query)))
     );
   }
   
@@ -388,14 +266,20 @@ function applyFilters() {
 function sortProjects(projects, sortBy) {
   switch (sortBy) {
     case 'latest':
-      return projects.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      return projects.sort((a, b) => {
+        const dateA = a.createdAt || new Date(0);
+        const dateB = b.createdAt || new Date(0);
+        return dateB - dateA;
+      });
     case 'alphabetical':
-      return projects.sort((a, b) => a.title.localeCompare(b.title));
+      return projects.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
     case 'featured':
       return projects.sort((a, b) => {
         if (a.featured && !b.featured) return -1;
         if (!a.featured && b.featured) return 1;
-        return new Date(b.createdAt) - new Date(a.createdAt);
+        const dateA = a.createdAt || new Date(0);
+        const dateB = b.createdAt || new Date(0);
+        return dateB - dateA;
       });
     default:
       return projects;
@@ -503,37 +387,44 @@ function renderProjectCards(container, projects) {
  * Create HTML for individual project card
  */
 function createProjectCardHTML(project) {
-  const techTags = project.technologies.map(tech => 
+  const techTags = (project.technologies || []).map(tech => 
     `<span class="tech-tag">${tech}</span>`
   ).join('');
   
-  const statusClass = project.status.replace('-', '');
-  const formattedDate = formatDate(project.createdAt);
+  const statusClass = (project.status || 'published').replace('-', '');
+  const formattedDate = project.createdAt ? formatDate(project.createdAt) : 'Unknown date';
+  
+  // Use first image or fallback
+  const imageUrl = project.images && project.images.length > 0 
+    ? project.images[0] 
+    : 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=600&h=400&fit=crop';
   
   return `
     <article class="project-card ${project.featured ? 'featured' : ''}" data-project-id="${project.id}">
       <div class="project-image">
-        <img src="${project.images[0]}" alt="${project.title}" loading="lazy">
+        <img src="${imageUrl}" alt="${project.title}" loading="lazy">
         <div class="project-overlay">
           <a href="#" onclick="loadProjectDetail('${project.id}')" class="project-link">View Details</a>
         </div>
       </div>
       <div class="project-content">
         <h3 class="project-title">${project.title}</h3>
-        <p class="project-description">${project.description}</p>
+        <p class="project-description">${project.description || 'No description available'}</p>
         <div class="project-tech">${techTags}</div>
         <div class="project-meta">
           <span class="project-date">${formattedDate}</span>
-          <span class="project-status ${statusClass}">${capitalizeFirst(project.status.replace('-', ' '))}</span>
+          <span class="project-status ${statusClass}">${capitalizeFirst((project.status || 'published').replace('-', ' '))}</span>
         </div>
         <div class="project-stats">
           ${project.downloads ? `<span class="project-downloads">📱 ${project.downloads}</span>` : ''}
           ${project.rating ? `<span class="project-rating">⭐ ${project.rating}</span>` : ''}
+          ${project.viewCount ? `<span class="project-views">👁 ${project.viewCount}</span>` : ''}
         </div>
         <div class="project-actions">
-          ${project.links.github ? `<a href="${project.links.github}" target="_blank" class="project-action">GitHub</a>` : ''}
-          ${project.links.demo ? `<a href="${project.links.demo}" target="_blank" class="project-action">Demo</a>` : ''}
-          ${project.links.playStore ? `<a href="${project.links.playStore}" target="_blank" class="project-action primary">Play Store</a>` : ''}
+          ${project.links?.github ? `<a href="${project.links.github}" target="_blank" class="project-action">GitHub</a>` : ''}
+          ${project.links?.demo ? `<a href="${project.links.demo}" target="_blank" class="project-action">Demo</a>` : ''}
+          ${project.links?.playStore ? `<a href="${project.links.playStore}" target="_blank" class="project-action primary">Play Store</a>` : ''}
+          ${project.links?.appStore ? `<a href="${project.links.appStore}" target="_blank" class="project-action primary">App Store</a>` : ''}
         </div>
       </div>
     </article>
@@ -582,8 +473,11 @@ function renderPagination() {
     </button>
   `;
   
-  // Page numbers
-  for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+  // Page numbers (show up to 5 pages)
+  const startPage = Math.max(1, ProjectsPage.currentPage - 2);
+  const endPage = Math.min(totalPages, startPage + 4);
+  
+  for (let i = startPage; i <= endPage; i++) {
     paginationHTML += `
       <button class="pagination-btn ${i === ProjectsPage.currentPage ? 'active' : ''}" 
               onclick="changePage(${i})">
@@ -739,16 +633,18 @@ function initializeProjectsAnimations() {
   const animationObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        entry.target.style.opacity = '0';
-        entry.target.style.transform = 'translateY(30px)';
-        entry.target.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        const element = entry.target;
+        
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(30px)';
+        element.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
         
         setTimeout(() => {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
+          element.style.opacity = '1';
+          element.style.transform = 'translateY(0)';
         }, 100);
         
-        animationObserver.unobserve(entry.target);
+        animationObserver.unobserve(element);
       }
     });
   }, {
@@ -764,6 +660,70 @@ function initializeProjectsAnimations() {
 }
 
 /**
+ * Load specific project detail
+ */
+function loadProjectDetail(projectId) {
+  const project = ProjectsPage.projects.find(p => p.id === projectId);
+  if (project) {
+    // Track project view
+    trackProjectView(projectId);
+    
+    // For now, show project info in alert (will be replaced with modal/page later)
+    const projectInfo = `
+Project: ${project.title}
+Description: ${project.description}
+Technologies: ${project.technologies?.join(', ') || 'None listed'}
+Status: ${project.status || 'Published'}
+    `;
+    
+    alert(`Project Details:\n\n${projectInfo}\n\nProject detail page will be implemented next!`);
+  }
+}
+
+/**
+ * Track page view for analytics
+ */
+async function trackPageView(page) {
+  try {
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      await firebase.firestore().collection('analytics').add({
+        type: 'page_view',
+        page: page,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        userAgent: navigator.userAgent,
+        referrer: document.referrer || 'direct'
+      });
+    }
+  } catch (error) {
+    console.warn('Analytics tracking failed:', error);
+  }
+}
+
+/**
+ * Track project view for analytics
+ */
+async function trackProjectView(projectId) {
+  try {
+    if (typeof firebase !== 'undefined' && firebase.firestore) {
+      // Track in analytics
+      await firebase.firestore().collection('analytics').add({
+        type: 'project_view',
+        projectId: projectId,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      
+      // Increment project view count
+      const projectRef = firebase.firestore().collection('projects').doc(projectId);
+      await projectRef.update({
+        viewCount: firebase.firestore.FieldValue.increment(1)
+      });
+    }
+  } catch (error) {
+    console.warn('Project view tracking failed:', error);
+  }
+}
+
+/**
  * Utility functions
  */
 function capitalizeFirst(str) {
@@ -771,6 +731,7 @@ function capitalizeFirst(str) {
 }
 
 function formatDate(date) {
+  if (!date) return 'Unknown date';
   return new Date(date).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -788,16 +749,6 @@ function debounce(func, wait) {
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
   };
-}
-
-/**
- * Load specific project detail (placeholder for now)
- */
-function loadProjectDetail(projectId) {
-  const project = ProjectsPage.projects.find(p => p.id === projectId);
-  if (project) {
-    alert(`Loading details for: ${project.title}\n\nThis will be implemented in the next step!`);
-  }
 }
 
 // Export functions for global access

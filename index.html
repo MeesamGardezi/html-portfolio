@@ -20,8 +20,8 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/responsive.css">
     
-    <!-- Page-specific CSS (will be loaded dynamically) -->
-    <link rel="stylesheet" id="page-css" href="">
+    <!-- Page-specific CSS -->
+    <link rel="stylesheet" href="css/pages/home.css">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
@@ -43,14 +43,14 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <div class="nav-logo">
-                <a href="#" onclick="loadPage('home')" class="logo-link">Your Name</a>
+                <a href="#" onclick="scrollToSection('home')" class="logo-link">Your Name</a>
             </div>
             
             <div class="nav-menu" id="nav-menu">
-                <a href="#" onclick="loadPage('home')" class="nav-link active" data-page="home">Home</a>
-                <a href="#" onclick="loadPage('projects')" class="nav-link" data-page="projects">Projects</a>
-                <a href="#about" class="nav-link">About</a>
-                <a href="#contact" class="nav-link">Contact</a>
+                <a href="#home" class="nav-link active" data-section="home">Home</a>
+                <a href="projects.html" class="nav-link" data-page="projects">Projects</a>
+                <a href="#about" class="nav-link" data-section="about">About</a>
+                <a href="#contact" class="nav-link" data-section="contact">Contact</a>
             </div>
             
             <div class="nav-toggle" id="nav-toggle">
@@ -79,13 +79,13 @@
                             across iOS and Android platforms.
                         </p>
                         <div class="hero-actions">
-                            <a href="#" onclick="loadPage('projects')" class="btn btn-primary">View My Work</a>
+                            <a href="projects.html" class="btn btn-primary">View My Work</a>
                             <a href="#contact" class="btn btn-secondary">Get In Touch</a>
                         </div>
                     </div>
                     <div class="hero-image">
                         <div class="hero-image-container">
-                            <img src="assets/images/profile.jpg" alt="Your Name - Flutter Developer" class="profile-image">
+                            <div class="profile-image"></div>
                         </div>
                     </div>
                 </div>
@@ -122,7 +122,7 @@
                     
                     <div class="about-highlights">
                         <div class="highlight-item">
-                            <h3 class="highlight-title">15+</h3>
+                            <h3 class="highlight-title" id="appsCount">15+</h3>
                             <p class="highlight-text">Apps Published</p>
                         </div>
                         <div class="highlight-item">
@@ -146,76 +146,16 @@
                     <p class="section-subtitle">A showcase of my best Flutter applications</p>
                 </div>
                 
-                <div class="projects-grid">
-                    <!-- Project Card 1 -->
-                    <article class="project-card featured">
-                        <div class="project-image">
-                            <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop&crop=center" alt="E-Commerce App" loading="lazy">
-                            <div class="project-overlay">
-                                <a href="#" onclick="loadProjectDetail('ecommerce-app')" class="project-link">View Details</a>
-                            </div>
-                        </div>
-                        <div class="project-content">
-                            <h3 class="project-title">E-Commerce Mobile App</h3>
-                            <p class="project-description">
-                                Full-featured shopping app with Firebase backend, payment integration, 
-                                and real-time order tracking.
-                            </p>
-                            <div class="project-tech">
-                                <span class="tech-tag">Flutter</span>
-                                <span class="tech-tag">Firebase</span>
-                                <span class="tech-tag">Stripe</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <!-- Project Card 2 -->
-                    <article class="project-card featured">
-                        <div class="project-image">
-                            <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop&crop=center" alt="Fitness Tracker App" loading="lazy">
-                            <div class="project-overlay">
-                                <a href="#" onclick="loadProjectDetail('fitness-tracker')" class="project-link">View Details</a>
-                            </div>
-                        </div>
-                        <div class="project-content">
-                            <h3 class="project-title">Fitness Tracker App</h3>
-                            <p class="project-description">
-                                Comprehensive fitness tracking with workout plans, progress monitoring, 
-                                and social features.
-                            </p>
-                            <div class="project-tech">
-                                <span class="tech-tag">Flutter</span>
-                                <span class="tech-tag">SQLite</span>
-                                <span class="tech-tag">Charts</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <!-- Project Card 3 -->
-                    <article class="project-card featured">
-                        <div class="project-image">
-                            <img src="https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=600&h=400&fit=crop&crop=center" alt="Weather App" loading="lazy">
-                            <div class="project-overlay">
-                                <a href="#" onclick="loadProjectDetail('weather-app')" class="project-link">View Details</a>
-                            </div>
-                        </div>
-                        <div class="project-content">
-                            <h3 class="project-title">Weather Forecast App</h3>
-                            <p class="project-description">
-                                Beautiful weather app with location-based forecasts, interactive maps, 
-                                and customizable widgets.
-                            </p>
-                            <div class="project-tech">
-                                <span class="tech-tag">Flutter</span>
-                                <span class="tech-tag">API</span>
-                                <span class="tech-tag">Maps</span>
-                            </div>
-                        </div>
-                    </article>
+                <div class="projects-grid" id="featuredProjectsGrid">
+                    <!-- Loading state -->
+                    <div class="project-loading" id="projectsLoading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading projects...</p>
+                    </div>
                 </div>
                 
                 <div class="section-footer">
-                    <a href="#" onclick="loadPage('projects')" class="btn btn-outline">View All Projects</a>
+                    <a href="projects.html" class="btn btn-outline">View All Projects</a>
                 </div>
             </div>
         </section>
@@ -346,14 +286,39 @@
                         </div>
                     </div>
                     
-                    <div class="contact-actions">
-                        <a href="mailto:your.email@example.com" class="btn btn-primary">Send Email</a>
-                        <div class="social-links">
-                            <a href="https://github.com/yourusername" target="_blank" rel="noopener" class="social-link">GitHub</a>
-                            <a href="https://linkedin.com/in/yourusername" target="_blank" rel="noopener" class="social-link">LinkedIn</a>
-                            <a href="https://twitter.com/yourusername" target="_blank" rel="noopener" class="social-link">Twitter</a>
-                        </div>
+                    <div class="contact-form-container">
+                        <form id="homeContactForm" class="contact-form">
+                            <div class="form-group">
+                                <label for="homeName">Name *</label>
+                                <input type="text" id="homeName" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="homeEmail">Email *</label>
+                                <input type="email" id="homeEmail" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="homeSubject">Subject *</label>
+                                <input type="text" id="homeSubject" name="subject" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="homeMessage">Message *</label>
+                                <textarea id="homeMessage" name="message" rows="4" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="homeSubmitBtn">
+                                <span class="btn-text">Send Message</span>
+                                <span class="btn-spinner hidden">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                                    </svg>
+                                </span>
+                            </button>
+                        </form>
                     </div>
+                </div>
+                
+                <div class="contact-actions">
+                    <a href="mailto:your.email@example.com" class="btn btn-outline">Direct Email</a>
+                    <a href="contact.html" class="btn btn-outline">Full Contact Form</a>
                 </div>
             </div>
         </section>
@@ -368,9 +333,10 @@
                 </div>
                 <div class="footer-center">
                     <div class="footer-links">
-                        <a href="#" onclick="loadPage('home')" class="footer-link">Home</a>
-                        <a href="#" onclick="loadPage('projects')" class="footer-link">Projects</a>
+                        <a href="#home" class="footer-link">Home</a>
+                        <a href="projects.html" class="footer-link">Projects</a>
                         <a href="#contact" class="footer-link">Contact</a>
+                        <a href="admin.html" class="footer-link" style="opacity: 0.5;">Admin</a>
                     </div>
                 </div>
                 <div class="footer-right">
@@ -396,17 +362,248 @@
         </div>
     </footer>
 
-    <!-- Core JavaScript -->
-    <script src="js/utils.js"></script>
-    <script src="js/layout.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/pages/home.js"></script>
-    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    
+    <!-- Core JavaScript -->
+    <script src="js/utils.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/main.js"></script>
     <script src="js/firebase-config.js"></script>
+    <script src="js/pages/home.js"></script>
+    
+    <!-- Home Page Contact Form Integration -->
+    <script>
+        // Home page specific functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeHomePage();
+        });
+
+        function initializeHomePage() {
+            // Load featured projects from Firebase
+            loadFeaturedProjects();
+            
+            // Initialize home contact form
+            initializeHomeContactForm();
+            
+            // Track page view
+            trackPageView('home');
+        }
+
+        /**
+         * Load featured projects from Firebase
+         */
+        async function loadFeaturedProjects() {
+            const grid = document.getElementById('featuredProjectsGrid');
+            const loading = document.getElementById('projectsLoading');
+            
+            try {
+                // Wait for Firebase to initialize
+                if (typeof firebase === 'undefined') {
+                    setTimeout(loadFeaturedProjects, 1000);
+                    return;
+                }
+                
+                const snapshot = await firebase.firestore()
+                    .collection('projects')
+                    .where('featured', '==', true)
+                    .orderBy('createdAt', 'desc')
+                    .limit(3)
+                    .get();
+                
+                const projects = [];
+                snapshot.forEach((doc) => {
+                    projects.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                // Hide loading
+                loading.style.display = 'none';
+                
+                if (projects.length === 0) {
+                    grid.innerHTML = `
+                        <div class="no-featured-projects">
+                            <p>Featured projects will appear here once added from the admin panel.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Render projects
+                grid.innerHTML = projects.map(project => createFeaturedProjectCard(project)).join('');
+                
+                // Update apps count in about section
+                const appsCount = document.getElementById('appsCount');
+                if (appsCount && projects.length > 0) {
+                    appsCount.textContent = `${projects.length}+`;
+                }
+                
+            } catch (error) {
+                console.error('Error loading featured projects:', error);
+                loading.innerHTML = `
+                    <div class="project-error">
+                        <p>Unable to load projects. Please try again later.</p>
+                    </div>
+                `;
+            }
+        }
+
+        /**
+         * Create featured project card HTML
+         */
+        function createFeaturedProjectCard(project) {
+            const imageUrl = project.images && project.images.length > 0 
+                ? project.images[0] 
+                : 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=600&h=400&fit=crop';
+            
+            const techTags = project.technologies 
+                ? project.technologies.map(tech => `<span class="tech-tag">${tech}</span>`).join('')
+                : '';
+            
+            return `
+                <article class="project-card featured">
+                    <div class="project-image">
+                        <img src="${imageUrl}" alt="${project.title}" loading="lazy">
+                        <div class="project-overlay">
+                            <a href="projects.html#${project.id}" class="project-link">View Details</a>
+                        </div>
+                    </div>
+                    <div class="project-content">
+                        <h3 class="project-title">${project.title}</h3>
+                        <p class="project-description">${project.description}</p>
+                        <div class="project-tech">${techTags}</div>
+                    </div>
+                </article>
+            `;
+        }
+
+        /**
+         * Initialize home contact form
+         */
+        function initializeHomeContactForm() {
+            const form = document.getElementById('homeContactForm');
+            if (!form) return;
+            
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                
+                // Basic validation
+                if (!data.name?.trim() || !data.email?.trim() || !data.subject?.trim() || !data.message?.trim()) {
+                    showHomeNotification('Please fill in all fields', 'error');
+                    return;
+                }
+                
+                const submitBtn = document.getElementById('homeSubmitBtn');
+                const btnText = submitBtn.querySelector('.btn-text');
+                const btnSpinner = submitBtn.querySelector('.btn-spinner');
+                
+                try {
+                    // Show loading
+                    btnText.textContent = 'Sending...';
+                    btnSpinner.classList.remove('hidden');
+                    submitBtn.disabled = true;
+                    
+                    // Submit to Firebase
+                    await firebase.firestore().collection('contacts').add({
+                        name: data.name.trim(),
+                        email: data.email.trim().toLowerCase(),
+                        subject: data.subject.trim(),
+                        message: data.message.trim(),
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        read: false,
+                        source: 'home_page'
+                    });
+                    
+                    showHomeNotification('Message sent successfully! I\'ll get back to you soon.', 'success');
+                    form.reset();
+                    
+                } catch (error) {
+                    console.error('Contact form error:', error);
+                    showHomeNotification('Failed to send message. Please try again.', 'error');
+                } finally {
+                    btnText.textContent = 'Send Message';
+                    btnSpinner.classList.add('hidden');
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+
+        /**
+         * Show home page notification
+         */
+        function showHomeNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `home-notification home-notification-${type}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 90px;
+                right: 20px;
+                background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#22c55e' : '#3b82f6'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 1000;
+                transform: translateX(400px);
+                transition: transform 0.3s ease;
+                max-width: 350px;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+            setTimeout(() => {
+                notification.style.transform = 'translateX(400px)';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        /**
+         * Track page view for analytics
+         */
+        async function trackPageView(page) {
+            try {
+                if (typeof firebase !== 'undefined' && firebase.firestore) {
+                    await firebase.firestore().collection('analytics').add({
+                        type: 'page_view',
+                        page: page,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        userAgent: navigator.userAgent,
+                        referrer: document.referrer || 'direct'
+                    });
+                }
+            } catch (error) {
+                console.warn('Analytics tracking failed:', error);
+            }
+        }
+
+        /**
+         * Scroll to section functionality
+         */
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                const navbarHeight = 70;
+                const targetPosition = section.offsetTop - navbarHeight;
+                
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        // Make functions available globally
+        window.scrollToSection = scrollToSection;
+    </script>
 </body>
 </html>
