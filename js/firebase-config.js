@@ -1,35 +1,19 @@
 /**
- * FIREBASE-CONFIG.JS - Firebase Configuration and Database Operations
+ * FIREBASE-CONFIG.JS - Firebase Configuration and Database Operations (FIXED VERSION)
  * Portfolio Website - Black & White Minimalistic Theme
- * FIXED VERSION - Resolves infinite loops, race conditions, and 400 errors
+ * FIXES: Removes env-config dependency, eliminates race conditions, ensures proper initialization
  */
 
-// Get Firebase configuration from environment or use defaults
-function getFirebaseConfig() {
-  // Try to get from environment variables first
-  if (window.ENV && window.ENV.FIREBASE_PROJECT_ID) {
-    return {
-      apiKey: window.ENV.FIREBASE_API_KEY,
-      authDomain: window.ENV.FIREBASE_AUTH_DOMAIN,
-      projectId: window.ENV.FIREBASE_PROJECT_ID,
-      storageBucket: window.ENV.FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: window.ENV.FIREBASE_MESSAGING_SENDER_ID,
-      appId: window.ENV.FIREBASE_APP_ID,
-      measurementId: window.ENV.FIREBASE_MEASUREMENT_ID
-    };
-  }
-  
-  // Fallback to hardcoded config (for development)
-  return {
-    apiKey: "AIzaSyCBUX2wKjdwYSw61T5_xGONXj34j5C5q2I",
-    authDomain: "mesog-portfolio.firebaseapp.com",
-    projectId: "mesog-portfolio",
-    storageBucket: "mesog-portfolio.firebasestorage.app",
-    messagingSenderId: "364503690658",
-    appId: "1:364503690658:web:cf39d35305364365ed16fb",
-    measurementId: "G-WYZYKX4RJL"
-  };
-}
+// Firebase configuration - hardcoded for reliability (no env-config dependency)
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCBUX2wKjdwYSw61T5_xGONXj34j5C5q2I",
+  authDomain: "mesog-portfolio.firebaseapp.com",
+  projectId: "mesog-portfolio",
+  storageBucket: "mesog-portfolio.firebasestorage.app",
+  messagingSenderId: "364503690658",
+  appId: "1:364503690658:web:cf39d35305364365ed16fb",
+  measurementId: "G-WYZYKX4RJL"
+};
 
 // Firebase services
 let app = null;
@@ -37,20 +21,18 @@ let db = null;
 let auth = null;
 let storage = null;
 
-// Firebase state with proper initialization tracking
+// Firebase state management (simplified)
 const FirebaseService = {
   isInitialized: false,
   isInitializing: false,
   initializationError: null,
   isOnline: navigator.onLine,
   user: null,
-  listeners: {},
-  initializationAttempts: 0,
-  maxAttempts: 3
+  listeners: {}
 };
 
 /**
- * Initialize Firebase services with proper error handling
+ * Initialize Firebase services
  */
 async function initializeFirebase() {
   // Prevent multiple simultaneous initialization attempts
@@ -58,35 +40,19 @@ async function initializeFirebase() {
     return FirebaseService.isInitialized;
   }
   
-  // Prevent infinite attempts
-  if (FirebaseService.initializationAttempts >= FirebaseService.maxAttempts) {
-    console.error('Firebase initialization failed after maximum attempts');
-    FirebaseService.initializationError = new Error('Max initialization attempts exceeded');
-    return false;
-  }
-  
   FirebaseService.isInitializing = true;
-  FirebaseService.initializationAttempts++;
   
   try {
-    console.log(`Firebase initialization attempt ${FirebaseService.initializationAttempts}...`);
+    console.log('Initializing Firebase...');
     
     // Check if Firebase SDK is loaded
     if (typeof firebase === 'undefined') {
       throw new Error('Firebase SDK not loaded');
     }
     
-    // Get configuration
-    const firebaseConfig = getFirebaseConfig();
-    
-    // Validate configuration
-    if (!firebaseConfig.projectId || !firebaseConfig.apiKey) {
-      throw new Error('Invalid Firebase configuration - missing required fields');
-    }
-    
     // Initialize Firebase app
     if (!firebase.apps.length) {
-      app = firebase.initializeApp(firebaseConfig);
+      app = firebase.initializeApp(FIREBASE_CONFIG);
     } else {
       app = firebase.app();
     }
@@ -105,9 +71,6 @@ async function initializeFirebase() {
     // Set up connectivity monitoring
     setupConnectivityMonitoring();
     
-    // Test connection with a simple read
-    await testFirebaseConnection();
-    
     FirebaseService.isInitialized = true;
     FirebaseService.isInitializing = false;
     FirebaseService.initializationError = null;
@@ -123,35 +86,7 @@ async function initializeFirebase() {
     console.error('Firebase initialization failed:', error);
     FirebaseService.isInitializing = false;
     FirebaseService.initializationError = error;
-    
-    // Don't retry immediately for certain errors
-    if (error.code === 'auth/invalid-api-key' || 
-        error.code === 'auth/project-not-found' ||
-        error.message.includes('Invalid Firebase configuration')) {
-      console.error('Fatal Firebase configuration error - will not retry');
-      FirebaseService.initializationAttempts = FirebaseService.maxAttempts;
-    }
-    
     return false;
-  }
-}
-
-/**
- * Test Firebase connection
- */
-async function testFirebaseConnection() {
-  if (!db) throw new Error('Firestore not initialized');
-  
-  try {
-    // Try to read from a test collection
-    await db.collection('_test').limit(1).get();
-  } catch (error) {
-    if (error.code === 'permission-denied') {
-      // This is actually expected - it means connection works but we don't have permission
-      console.log('Firebase connection test successful (permission denied as expected)');
-      return;
-    }
-    throw error;
   }
 }
 
@@ -192,7 +127,6 @@ function setupAuthListener() {
     
     if (user) {
       console.log('User signed in:', user.email);
-      logSecurityEvent('user_signed_in', { email: user.email });
     } else {
       console.log('User signed out');
     }
@@ -209,50 +143,12 @@ function setupConnectivityMonitoring() {
   window.addEventListener('online', () => {
     FirebaseService.isOnline = true;
     console.log('Connection restored');
-    showConnectionStatus('online');
   });
   
   window.addEventListener('offline', () => {
     FirebaseService.isOnline = false;
     console.log('Connection lost - operating in offline mode');
-    showConnectionStatus('offline');
   });
-}
-
-/**
- * Show connection status to user
- */
-function showConnectionStatus(status) {
-  const notification = document.createElement('div');
-  notification.className = 'connection-notification';
-  notification.innerHTML = `
-    <div class="connection-status ${status}">
-      ${status === 'online' ? '🟢 Back online' : '🔴 Working offline'}
-    </div>
-  `;
-  
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    background: ${status === 'online' ? '#22c55e' : '#f59e0b'};
-    color: white;
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transform: translateX(400px);
-    transition: transform 0.3s ease;
-  `;
-  
-  document.body.appendChild(notification);
-  
-  setTimeout(() => notification.style.transform = 'translateX(0)', 100);
-  setTimeout(() => {
-    notification.style.transform = 'translateX(400px)';
-    setTimeout(() => notification.remove(), 300);
-  }, 3000);
 }
 
 /**
@@ -266,41 +162,6 @@ function notifyInitializationComplete() {
 }
 
 /**
- * Log security events
- */
-async function logSecurityEvent(eventType, data = {}) {
-  try {
-    if (db && FirebaseService.isInitialized) {
-      await db.collection('security_logs').add({
-        eventType,
-        ...data,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        userAgent: navigator.userAgent,
-        url: window.location.href
-      });
-    }
-  } catch (error) {
-    console.warn('Failed to log security event:', error);
-  }
-}
-
-/**
- * Add authentication state listener
- */
-function addAuthListener(callback) {
-  const listenerId = generateListenerId();
-  FirebaseService.listeners[listenerId] = callback;
-  return listenerId;
-}
-
-/**
- * Remove authentication state listener
- */
-function removeAuthListener(listenerId) {
-  delete FirebaseService.listeners[listenerId];
-}
-
-/**
  * Notify authentication listeners
  */
 function notifyAuthListeners(user) {
@@ -311,13 +172,6 @@ function notifyAuthListeners(user) {
       console.error('Error in auth listener:', error);
     }
   });
-}
-
-/**
- * Generate unique listener ID
- */
-function generateListenerId() {
-  return `listener_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
 /* ==========================================================================
@@ -385,21 +239,12 @@ async function signInWithEmail(email, password) {
   }
   
   try {
-    await logSecurityEvent('sign_in_attempt', { email });
-    
     const result = await auth.signInWithEmailAndPassword(email, password);
     console.log('Sign in successful:', result.user.email);
     
     return { success: true, user: result.user };
   } catch (error) {
     console.error('Sign in failed:', error);
-    
-    await logSecurityEvent('sign_in_failed', { 
-      email, 
-      error: error.code,
-      message: error.message 
-    });
-    
     return { success: false, error: error.message };
   }
 }
@@ -413,8 +258,6 @@ async function signOut() {
   try {
     const userEmail = auth.currentUser?.email;
     await auth.signOut();
-    
-    await logSecurityEvent('user_signed_out', { email: userEmail });
     
     console.log('Sign out successful');
     return { success: true };
@@ -438,21 +281,6 @@ function getCurrentUser() {
   return FirebaseService.user;
 }
 
-/**
- * Get current user claims
- */
-async function getUserClaims() {
-  if (!FirebaseService.user) return null;
-  
-  try {
-    const idTokenResult = await FirebaseService.user.getIdTokenResult();
-    return idTokenResult.claims;
-  } catch (error) {
-    console.error('Error getting user claims:', error);
-    return null;
-  }
-}
-
 /* ==========================================================================
    FIRESTORE DATABASE METHODS
    ========================================================================== */
@@ -462,7 +290,7 @@ async function getUserClaims() {
  */
 async function getProjects() {
   if (!db) {
-    console.warn('Firestore not available, using local data');
+    console.warn('Firestore not available');
     return [];
   }
   
@@ -761,74 +589,6 @@ async function deleteImage(url) {
 }
 
 /* ==========================================================================
-   REAL-TIME LISTENERS
-   ========================================================================== */
-
-/**
- * Listen to projects collection changes
- */
-function listenToProjects(callback) {
-  if (!db) {
-    console.warn('Firestore not available for real-time listening');
-    return () => {};
-  }
-  
-  const unsubscribe = db.collection('projects')
-    .orderBy('createdAt', 'desc')
-    .onSnapshot((snapshot) => {
-      const projects = [];
-      snapshot.forEach((doc) => {
-        projects.push({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate(),
-          updatedAt: doc.data().updatedAt?.toDate()
-        });
-      });
-      
-      callback(projects);
-    }, (error) => {
-      console.error('Error listening to projects:', error);
-    });
-  
-  return unsubscribe;
-}
-
-/**
- * Listen to contacts collection changes
- */
-function listenToContacts(callback) {
-  if (!db) {
-    console.warn('Firestore not available for real-time listening');
-    return () => {};
-  }
-  
-  if (!isAuthenticated()) {
-    console.warn('User not authenticated for contacts listener');
-    return () => {};
-  }
-  
-  const unsubscribe = db.collection('contacts')
-    .orderBy('createdAt', 'desc')
-    .onSnapshot((snapshot) => {
-      const contacts = [];
-      snapshot.forEach((doc) => {
-        contacts.push({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate()
-        });
-      });
-      
-      callback(contacts);
-    }, (error) => {
-      console.error('Error listening to contacts:', error);
-    });
-  
-  return unsubscribe;
-}
-
-/* ==========================================================================
    ANALYTICS AND METRICS
    ========================================================================== */
 
@@ -874,62 +634,17 @@ async function trackProjectView(projectId) {
   }
 }
 
-/**
- * Get analytics data
- */
-async function getAnalytics(dateRange = 30) {
-  if (!db) throw new Error('Firestore not initialized');
-  if (!isAuthenticated()) throw new Error('User not authenticated');
-  
-  try {
-    const dateFrom = new Date();
-    dateFrom.setDate(dateFrom.getDate() - dateRange);
-    
-    const analyticsSnapshot = await db.collection('analytics')
-      .where('timestamp', '>=', dateFrom)
-      .get();
-    
-    const pageViews = analyticsSnapshot.docs.filter(doc => doc.data().type === 'page_view').length;
-    const projectViews = analyticsSnapshot.docs.filter(doc => doc.data().type === 'project_view').length;
-    
-    const projectsSnapshot = await db.collection('projects').get();
-    const totalProjects = projectsSnapshot.size;
-    
-    const contactsSnapshot = await db.collection('contacts')
-      .where('createdAt', '>=', dateFrom)
-      .get();
-    const contactMessages = contactsSnapshot.size;
-    
-    return {
-      pageViews,
-      projectViews,
-      totalProjects,
-      contactMessages
-    };
-  } catch (error) {
-    console.error('Error fetching analytics:', error);
-    throw error;
-  }
-}
-
 /* ==========================================================================
-   INITIALIZATION WITH PROPER ERROR HANDLING
+   INITIALIZATION
    ========================================================================== */
 
-// Wait for DOM and try to initialize Firebase
+// Initialize Firebase when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-  // Small delay to ensure all scripts are loaded
+  // Small delay to ensure Firebase SDK is loaded
   setTimeout(() => {
     initializeFirebase();
   }, 100);
 });
-
-// Also initialize when Firebase SDK loads (if DOM already ready)
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeFirebase);
-} else {
-  setTimeout(initializeFirebase, 100);
-}
 
 // Export Firebase service object for global access
 window.FirebaseService = {
@@ -944,9 +659,6 @@ window.FirebaseService = {
   signOut,
   isAuthenticated,
   getCurrentUser,
-  getUserClaims,
-  addAuthListener,
-  removeAuthListener,
   
   // Projects
   getProjects,
@@ -955,14 +667,12 @@ window.FirebaseService = {
   updateProject,
   deleteProject,
   getFeaturedProjects,
-  listenToProjects,
   
   // Contacts
   getContacts,
   addContact,
   updateContact,
   deleteContact,
-  listenToContacts,
   
   // Storage
   uploadImage,
@@ -971,9 +681,7 @@ window.FirebaseService = {
   // Analytics
   trackPageView,
   trackProjectView,
-  getAnalytics,
   
   // Security
-  RateLimiter,
-  logSecurityEvent
+  RateLimiter
 };

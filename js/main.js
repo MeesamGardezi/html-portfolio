@@ -1,31 +1,53 @@
 /**
- * MAIN.JS - Core Application Logic
+ * MAIN.JS - Core Application Logic (FIXED VERSION)
  * Portfolio Website - Black & White Minimalistic Theme
+ * FIXES: Removes problematic loadPage() function, improves navigation consistency
  */
 
 // Global App State
 const App = {
-  currentPage: 'home',
+  currentPage: getCurrentPageFromURL(),
   isLoading: false,
   pages: {
     home: {
       title: 'Flutter Developer Portfolio',
-      cssFile: 'css/pages/home.css'
+      description: 'Flutter Developer Portfolio - Showcasing mobile app development expertise'
     },
     projects: {
       title: 'Projects - Flutter Developer',  
-      cssFile: 'css/pages/projects.css'
+      description: 'Flutter Developer Projects - Mobile App Portfolio'
     },
     about: {
       title: 'About - Flutter Developer',
-      cssFile: 'css/pages/about.css'
+      description: 'About Flutter Developer - Background and expertise'
     },
     contact: {
       title: 'Contact - Flutter Developer',
-      cssFile: 'css/pages/contact.css'
+      description: 'Contact Flutter Developer - Get in touch for mobile app development'
+    },
+    admin: {
+      title: 'Admin Panel - Portfolio Management',
+      description: 'Admin Panel for Portfolio Management'
     }
   }
 };
+
+/**
+ * Get current page from URL
+ */
+function getCurrentPageFromURL() {
+  const path = window.location.pathname;
+  
+  if (path.includes('projects.html')) {
+    return 'projects';
+  } else if (path.includes('contact.html')) {
+    return 'contact';
+  } else if (path.includes('admin.html')) {
+    return 'admin';
+  } else {
+    return 'home';
+  }
+}
 
 /**
  * Initialize the application when DOM is loaded
@@ -40,8 +62,11 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeApp() {
   console.log('Initializing Portfolio App...');
   
-  // Load home page specific CSS
-  loadPageCSS('home');
+  // Update current page state
+  App.currentPage = getCurrentPageFromURL();
+  
+  // Set page title based on current page
+  updatePageTitle();
   
   // Initialize smooth scrolling for internal links
   initializeSmoothScrolling();
@@ -49,77 +74,34 @@ function initializeApp() {
   // Initialize scroll animations
   initializeScrollAnimations();
   
-  // Initialize hero animations
-  initializeHeroAnimations();
+  // Initialize hero animations (if on home page)
+  if (App.currentPage === 'home') {
+    initializeHeroAnimations();
+  }
+  
+  // Initialize navbar scroll effect
+  initializeNavbarScrollEffect();
+  
+  // Initialize page-specific functionality
+  initializePageSpecificFeatures();
   
   console.log('Portfolio App initialized successfully');
 }
 
 /**
- * Load page-specific CSS
- * @param {string} page - Page name
+ * Update page title based on current page
  */
-function loadPageCSS(page) {
-  const pageConfig = App.pages[page];
-  if (!pageConfig || !pageConfig.cssFile) return;
-  
-  const existingLink = document.getElementById('page-css');
-  if (existingLink) {
-    existingLink.href = pageConfig.cssFile;
-  } else {
-    const link = document.createElement('link');
-    link.id = 'page-css';
-    link.rel = 'stylesheet';
-    link.href = pageConfig.cssFile;
-    document.head.appendChild(link);
-  }
-}
-
-/**
- * Load specific page
- * @param {string} page - Page name to load
- */
-function loadPage(page) {
-  console.log(`Loading page: ${page}`);
-  
-  if (page === 'home') {
-    // Navigate to home page
-    window.location.href = 'index.html';
-  } else if (page === 'projects') {
-    // Navigate to projects page
-    window.location.href = 'projects.html';
-  } else if (page === 'about') {
-    // Scroll to about section on home page
-    if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
-      scrollToSection('about');
-    } else {
-      window.location.href = 'index.html#about';
-    }
-  } else if (page === 'contact') {
-    // Scroll to contact section on home page
-    if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
-      scrollToSection('contact');
-    } else {
-      window.location.href = 'index.html#contact';
+function updatePageTitle() {
+  const pageConfig = App.pages[App.currentPage];
+  if (pageConfig) {
+    document.title = pageConfig.title;
+    
+    // Update meta description if it exists
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription && pageConfig.description) {
+      metaDescription.setAttribute('content', pageConfig.description);
     }
   }
-  
-  // Update active navigation
-  updateNavigationState(page);
-}
-
-/**
- * Update navigation active state
- * @param {string} page - Current page name
- */
-function updateNavigationState(page) {
-  const navLinks = document.querySelectorAll('.nav-link');
-  navLinks.forEach(link => {
-    link.classList.remove('active');
-    if (link.getAttribute('data-page') === page) {
-      link.classList.add('active');
-    }
-  });
 }
 
 /**
@@ -139,15 +121,23 @@ function initializeSmoothScrolling() {
       const targetElement = document.getElementById(targetId);
       
       if (targetElement) {
-        const navbarHeight = 70;
-        const targetPosition = targetElement.offsetTop - navbarHeight;
-        
-        window.scrollTo({
-          top: targetPosition,
-          behavior: 'smooth'
-        });
+        scrollToElement(targetElement);
       }
     });
+  });
+}
+
+/**
+ * Scroll to element with smooth animation
+ * @param {Element} element - Target element to scroll to
+ */
+function scrollToElement(element) {
+  const navbarHeight = window.Layout ? window.Layout.getNavbarHeight() : 70;
+  const targetPosition = element.offsetTop - navbarHeight;
+  
+  window.scrollTo({
+    top: targetPosition,
+    behavior: 'smooth'
   });
 }
 
@@ -164,7 +154,7 @@ function initializeScrollAnimations() {
         
         // Add fade-in animation
         element.style.opacity = '0';
-        element.style.transform = 'translateY(30px)';
+        element.style.transform = 'translateY(20px)';
         element.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
         
         // Trigger animation
@@ -184,13 +174,11 @@ function initializeScrollAnimations() {
   
   // Observe elements for animation
   const animatedElements = document.querySelectorAll([
-    '.about-section',
-    '.featured-projects-section', 
-    '.skills-section',
-    '.contact-section',
+    '.section:not(.hero-section)',
     '.project-card',
     '.skills-category',
-    '.highlight-item'
+    '.highlight-item',
+    '.contact-item'
   ].join(','));
   
   animatedElements.forEach(element => {
@@ -199,7 +187,7 @@ function initializeScrollAnimations() {
 }
 
 /**
- * Initialize hero section animations
+ * Initialize hero section animations (for home page)
  */
 function initializeHeroAnimations() {
   const heroText = document.querySelector('.hero-text');
@@ -208,9 +196,9 @@ function initializeHeroAnimations() {
   if (heroText && heroImage) {
     // Initial state
     heroText.style.opacity = '0';
-    heroText.style.transform = 'translateX(-50px)';
+    heroText.style.transform = 'translateX(-30px)';
     heroImage.style.opacity = '0';  
-    heroImage.style.transform = 'translateX(50px)';
+    heroImage.style.transform = 'translateX(30px)';
     
     // Animate in
     setTimeout(() => {
@@ -234,7 +222,7 @@ function initializeHeroAnimations() {
           skillsObserver.unobserve(entry.target);
         }
       });
-    });
+    }, { threshold: 0.3 });
     
     skillsObserver.observe(skillsSection);
   }
@@ -253,34 +241,190 @@ function animateSkillBars() {
     setTimeout(() => {
       bar.style.transition = 'width 1.5s ease-out';
       bar.style.width = targetWidth;
-    }, index * 200);
+    }, index * 150);
   });
 }
 
 /**
- * Scroll to a specific section
+ * Initialize navbar scroll effect
+ */
+function initializeNavbarScrollEffect() {
+  const navbar = document.getElementById('navbar');
+  if (!navbar) return;
+  
+  const throttledScrollHandler = throttle(() => {
+    if (window.scrollY > 50) {
+      navbar.classList.add('scrolled');
+    } else {
+      navbar.classList.remove('scrolled');
+    }
+  }, 16);
+  
+  window.addEventListener('scroll', throttledScrollHandler, { passive: true });
+}
+
+/**
+ * Initialize page-specific functionality
+ */
+function initializePageSpecificFeatures() {
+  switch (App.currentPage) {
+    case 'home':
+      initializeHomeFeatures();
+      break;
+    case 'projects':
+      initializeProjectsFeatures();
+      break;
+    case 'contact':
+      initializeContactFeatures();
+      break;
+    case 'admin':
+      initializeAdminFeatures();
+      break;
+  }
+}
+
+/**
+ * Initialize home page specific features
+ */
+function initializeHomeFeatures() {
+  // Initialize counter animations for statistics
+  const aboutSection = document.querySelector('.about-section');
+  if (aboutSection) {
+    const aboutObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          animateCounters();
+          aboutObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    
+    aboutObserver.observe(aboutSection);
+  }
+}
+
+/**
+ * Animate counter elements
+ */
+function animateCounters() {
+  const counters = document.querySelectorAll('.highlight-title');
+  
+  counters.forEach(counter => {
+    const text = counter.textContent;
+    const numberMatch = text.match(/\d+/);
+    
+    if (numberMatch) {
+      const targetNumber = parseInt(numberMatch[0]);
+      const suffix = text.replace(numberMatch[0], '');
+      let currentNumber = 0;
+      const increment = targetNumber / 50; // 50 steps
+      
+      const timer = setInterval(() => {
+        currentNumber += increment;
+        if (currentNumber >= targetNumber) {
+          counter.textContent = targetNumber + suffix;
+          clearInterval(timer);
+        } else {
+          counter.textContent = Math.floor(currentNumber) + suffix;
+        }
+      }, 30);
+    }
+  });
+}
+
+/**
+ * Initialize projects page specific features
+ */
+function initializeProjectsFeatures() {
+  // Projects page features are handled in projects.js
+  console.log('Projects page features initialized');
+}
+
+/**
+ * Initialize contact page specific features
+ */
+function initializeContactFeatures() {
+  // Contact page features are handled in contact.html inline scripts
+  console.log('Contact page features initialized');
+}
+
+/**
+ * Initialize admin page specific features
+ */
+function initializeAdminFeatures() {
+  // Admin page features are handled in admin.js
+  console.log('Admin page features initialized');
+}
+
+/**
+ * Scroll to a specific section by ID
  * @param {string} sectionId - Section ID to scroll to
  */
 function scrollToSection(sectionId) {
   const targetElement = document.getElementById(sectionId);
   if (targetElement) {
-    const navbarHeight = 70;
-    const targetPosition = targetElement.offsetTop - navbarHeight;
-    
-    window.scrollTo({
-      top: targetPosition,
-      behavior: 'smooth'
-    });
+    scrollToElement(targetElement);
   }
 }
 
 /**
- * Load specific project detail (placeholder for now)
- * @param {string} projectId - Project ID to load
+ * Navigate to external URLs or specific project details
+ * @param {string} url - URL to navigate to
  */
-function loadProjectDetail(projectId) {
-  console.log(`Loading project detail for: ${projectId}`);
-  alert(`Project details for ${projectId} will be implemented next!`);
+function navigateToURL(url) {
+  if (url.startsWith('http')) {
+    // External URL - open in new tab
+    window.open(url, '_blank', 'noopener,noreferrer');
+  } else {
+    // Internal URL - navigate normally
+    window.location.href = url;
+  }
+}
+
+/**
+ * Show loading state
+ * @param {boolean} show - Whether to show loading state
+ */
+function showLoadingState(show = true) {
+  const loadingScreen = document.getElementById('loading-screen');
+  if (loadingScreen) {
+    if (show) {
+      loadingScreen.classList.remove('hidden');
+    } else {
+      loadingScreen.classList.add('hidden');
+    }
+  }
+}
+
+/**
+ * Utility function to throttle function calls
+ * @param {Function} func - Function to throttle
+ * @param {number} wait - Wait time in milliseconds
+ * @returns {Function} Throttled function
+ */
+function throttle(func, wait) {
+  let timeout;
+  let previous = 0;
+  
+  return function executedFunction(...args) {
+    const now = Date.now();
+    const remaining = wait - (now - previous);
+    
+    if (remaining <= 0 || remaining > wait) {
+      if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+      }
+      previous = now;
+      func.apply(this, args);
+    } else if (!timeout) {
+      timeout = setTimeout(() => {
+        previous = Date.now();
+        timeout = null;
+        func.apply(this, args);
+      }, remaining);
+    }
+  };
 }
 
 /**
@@ -301,18 +445,28 @@ function debounce(func, wait) {
   };
 }
 
-// Export functions for global access
-window.loadPage = loadPage;
-window.loadProjectDetail = loadProjectDetail;
+/**
+ * Check if element is in viewport
+ * @param {Element} element - Element to check
+ * @returns {boolean} True if element is in viewport
+ */
+function isElementInViewport(element) {
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
 
-// Handle navbar scroll effect
-window.addEventListener('scroll', debounce(() => {
-  const navbar = document.getElementById('navbar');
-  if (navbar) {
-    if (window.scrollY > 50) {
-      navbar.classList.add('scrolled');
-    } else {
-      navbar.classList.remove('scrolled');
-    }
-  }
-}, 10));
+// Export functions for global access (REMOVED loadPage function)
+window.App = App;
+window.scrollToSection = scrollToSection;
+window.navigateToURL = navigateToURL;
+window.showLoadingState = showLoadingState;
+window.isElementInViewport = isElementInViewport;
+
+// Export utility functions
+window.throttle = throttle;
+window.debounce = debounce;

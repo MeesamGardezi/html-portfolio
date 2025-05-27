@@ -1,6 +1,7 @@
 /**
- * LAYOUT.JS - Navigation & Layout Logic
+ * LAYOUT.JS - Navigation & Layout Logic (FIXED VERSION)
  * Portfolio Website - Black & White Minimalistic Theme
+ * FIXES: Consistent navigation across all pages, proper link handling, scroll behavior
  */
 
 // Layout-specific state and functionality
@@ -71,7 +72,7 @@ function initializeNavigation() {
   if (logoLink) {
     logoLink.addEventListener('click', function(e) {
       e.preventDefault();
-      loadPage('home');
+      navigateToPage('index.html');
       closeMobileMenu();
     });
   }
@@ -81,26 +82,77 @@ function initializeNavigation() {
 }
 
 /**
- * Handle navigation link clicks
+ * Handle navigation link clicks (FIXED VERSION)
  * @param {Event} event - Click event
  */
 function handleNavLinkClick(event) {
   event.preventDefault();
   
   const link = event.currentTarget;
-  const page = link.getAttribute('data-page');
+  const href = link.getAttribute('href');
+  const dataPage = link.getAttribute('data-page');
   
-  if (page && window.loadPage) {
-    window.loadPage(page);
-    closeMobileMenu();
-  } else {
-    // Handle anchor links within the same page
-    const href = link.getAttribute('href');
-    if (href && href.startsWith('#')) {
+  // Handle different types of navigation
+  if (href) {
+    if (href.startsWith('#')) {
+      // Internal anchor link (scroll to section)
       const targetId = href.substring(1);
-      scrollToSection(targetId);
-      closeMobileMenu();
+      
+      // If we're not on index page, go to index first
+      if (!window.location.pathname.includes('index.html') && 
+          window.location.pathname !== '/' && 
+          window.location.pathname !== '') {
+        navigateToPage(`index.html${href}`);
+      } else {
+        scrollToSection(targetId);
+      }
+    } else if (href.includes('.html')) {
+      // Navigate to different page
+      navigateToPage(href);
     }
+  } else if (dataPage) {
+    // Handle data-page navigation
+    switch (dataPage) {
+      case 'home':
+        navigateToPage('index.html');
+        break;
+      case 'projects':
+        navigateToPage('projects.html');
+        break;
+      case 'contact':
+        navigateToPage('contact.html');
+        break;
+      case 'about':
+        if (window.location.pathname.includes('index.html') || 
+            window.location.pathname === '/' || 
+            window.location.pathname === '') {
+          scrollToSection('about');
+        } else {
+          navigateToPage('index.html#about');
+        }
+        break;
+    }
+  }
+  
+  closeMobileMenu();
+}
+
+/**
+ * Navigate to a page (FIXED VERSION)
+ * @param {string} url - URL to navigate to
+ */
+function navigateToPage(url) {
+  // Smooth page transition
+  const mainContent = document.getElementById('main-content');
+  if (mainContent) {
+    mainContent.style.opacity = '0.7';
+    mainContent.style.transform = 'translateY(10px)';
+    
+    setTimeout(() => {
+      window.location.href = url;
+    }, 150);
+  } else {
+    window.location.href = url;
   }
 }
 
@@ -152,25 +204,59 @@ function updateNavbarOnScroll(scrollY) {
   } else {
     Layout.navbar.classList.remove('scrolled');
   }
-  
-  // Optional: Hide/show navbar based on scroll direction (commented out for now)
-  /*
-  if (scrollY > Layout.scrollThreshold) {
-    if (Layout.scrollDirection === 'down' && scrollY > Layout.lastScrollY + 10) {
-      Layout.navbar.style.transform = 'translateY(-100%)';
-    } else if (Layout.scrollDirection === 'up') {
-      Layout.navbar.style.transform = 'translateY(0)';
-    }
-  } else {
-    Layout.navbar.style.transform = 'translateY(0)';
-  }
-  */
 }
 
 /**
  * Update active navigation link based on current section
  */
 function updateActiveNavLink() {
+  const navLinks = document.querySelectorAll('.nav-link');
+  const currentPath = window.location.pathname;
+  const currentHash = window.location.hash;
+  
+  navLinks.forEach(link => {
+    link.classList.remove('active');
+    
+    const href = link.getAttribute('href');
+    const dataPage = link.getAttribute('data-page');
+    
+    // Check for page-based navigation
+    if (href) {
+      if (href.includes('index.html') && (currentPath.includes('index.html') || currentPath === '/' || currentPath === '')) {
+        link.classList.add('active');
+      } else if (href.includes('projects.html') && currentPath.includes('projects.html')) {
+        link.classList.add('active');
+      } else if (href.includes('contact.html') && currentPath.includes('contact.html')) {
+        link.classList.add('active');
+      } else if (href.includes('admin.html') && currentPath.includes('admin.html')) {
+        link.classList.add('active');
+      } else if (href.startsWith('#') && href === currentHash) {
+        link.classList.add('active');
+      }
+    }
+    
+    // Check for data-page navigation
+    if (dataPage) {
+      if (dataPage === 'home' && (currentPath.includes('index.html') || currentPath === '/' || currentPath === '')) {
+        link.classList.add('active');
+      } else if (dataPage === 'projects' && currentPath.includes('projects.html')) {
+        link.classList.add('active');
+      } else if (dataPage === 'contact' && currentPath.includes('contact.html')) {
+        link.classList.add('active');
+      }
+    }
+  });
+  
+  // Handle section-based active states for single page
+  if (currentPath.includes('index.html') || currentPath === '/' || currentPath === '') {
+    updateSectionBasedNavigation();
+  }
+}
+
+/**
+ * Update navigation based on current section in viewport
+ */
+function updateSectionBasedNavigation() {
   const sections = document.querySelectorAll('section[id]');
   const navLinks = document.querySelectorAll('.nav-link');
   
@@ -182,26 +268,27 @@ function updateActiveNavLink() {
     const sectionTop = rect.top;
     const sectionHeight = rect.height;
     
-    // Check if section is in viewport (with some offset for navbar)
+    // Check if section is in viewport (with offset for navbar)
     if (sectionTop <= 100 && sectionTop + sectionHeight > 100) {
       currentSection = section.id;
     }
   });
   
-  // Update navigation link active states
-  navLinks.forEach(link => {
-    const href = link.getAttribute('href');
-    link.classList.remove('active');
-    
-    if (href && href.startsWith('#')) {
-      const sectionId = href.substring(1);
-      if (sectionId === currentSection) {
-        link.classList.add('active');
+  // Update navigation link active states for sections
+  if (currentSection) {
+    navLinks.forEach(link => {
+      const href = link.getAttribute('href');
+      if (href && href === `#${currentSection}`) {
+        // Remove active from page-level navigation first
+        if (href.startsWith('#')) {
+          // Only add active to section links, not page links
+          link.classList.add('active');
+        }
+      } else if (href && href.startsWith('#') && href !== `#${currentSection}`) {
+        link.classList.remove('active');
       }
-    } else if (link.getAttribute('data-page') === window.App?.currentPage) {
-      link.classList.add('active');
-    }
-  });
+    });
+  }
 }
 
 /**
@@ -255,6 +342,7 @@ function openMobileMenu() {
   Layout.isMenuOpen = true;
   Layout.navToggle.classList.add('active');
   Layout.navMenu.classList.add('active');
+  Layout.navToggle.setAttribute('aria-expanded', 'true');
   
   // Prevent body scroll when menu is open
   document.body.style.overflow = 'hidden';
@@ -273,6 +361,7 @@ function closeMobileMenu() {
   Layout.isMenuOpen = false;
   Layout.navToggle.classList.remove('active');
   Layout.navMenu.classList.remove('active');
+  Layout.navToggle.setAttribute('aria-expanded', 'false');
   
   // Restore body scroll
   document.body.style.overflow = '';
@@ -322,6 +411,9 @@ function scrollToSection(sectionId) {
     top: targetPosition,
     behavior: 'smooth'
   });
+  
+  // Update URL hash without triggering navigation
+  history.pushState(null, null, `#${sectionId}`);
 }
 
 /**
@@ -338,6 +430,38 @@ function getNavbarHeight() {
  */
 function isMobileMenuOpen() {
   return Layout.isMenuOpen;
+}
+
+/**
+ * Update page title and meta description
+ * @param {string} title - Page title
+ * @param {string} description - Page description
+ */
+function updatePageMeta(title, description) {
+  document.title = title;
+  
+  // Update meta description
+  const metaDescription = document.querySelector('meta[name="description"]');
+  if (metaDescription && description) {
+    metaDescription.setAttribute('content', description);
+  }
+}
+
+/**
+ * Show/hide loading state for navigation
+ * @param {boolean} isLoading - Loading state
+ */
+function setNavigationLoading(isLoading) {
+  const navLinks = document.querySelectorAll('.nav-link');
+  navLinks.forEach(link => {
+    if (isLoading) {
+      link.style.pointerEvents = 'none';
+      link.style.opacity = '0.6';
+    } else {
+      link.style.pointerEvents = '';
+      link.style.opacity = '';
+    }
+  });
 }
 
 /**
@@ -396,38 +520,6 @@ function throttle(func, limit) {
   };
 }
 
-/**
- * Update page title and meta description
- * @param {string} title - Page title
- * @param {string} description - Page description
- */
-function updatePageMeta(title, description) {
-  document.title = title;
-  
-  // Update meta description
-  const metaDescription = document.querySelector('meta[name="description"]');
-  if (metaDescription && description) {
-    metaDescription.setAttribute('content', description);
-  }
-}
-
-/**
- * Show/hide loading state for navigation
- * @param {boolean} isLoading - Loading state
- */
-function setNavigationLoading(isLoading) {
-  const navLinks = document.querySelectorAll('.nav-link');
-  navLinks.forEach(link => {
-    if (isLoading) {
-      link.style.pointerEvents = 'none';
-      link.style.opacity = '0.6';
-    } else {
-      link.style.pointerEvents = '';
-      link.style.opacity = '';
-    }
-  });
-}
-
 // Initialize scroll animations when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
   // Delay animation initialization to ensure all content is loaded
@@ -442,5 +534,6 @@ window.Layout = {
   closeMobileMenu,
   updatePageMeta,
   setNavigationLoading,
-  addScrollAnimation
+  addScrollAnimation,
+  navigateToPage
 };
