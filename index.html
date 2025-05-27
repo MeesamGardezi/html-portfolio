@@ -9,9 +9,26 @@
     
     <title id="page-title">Flutter Developer Portfolio</title>
     
-    <!-- Preconnect to fonts -->
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://*.firebaseapp.com https://*.googleapis.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://*.google-analytics.com; frame-src 'none'; object-src 'none';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    
+    <!-- Environment Configuration Meta Tags (Alternative injection method) -->
+    <meta name="config:APP_NAME" content="Flutter Developer Portfolio">
+    <meta name="config:APP_VERSION" content="1.0.0">
+    <meta name="config:DEVELOPER_NAME" content="Your Name">
+    <meta name="config:DEVELOPER_TITLE" content="Flutter Developer">
+    
+    <!-- Preconnect to external domains for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com">
+    <link rel="dns-prefetch" href="https://firebaseapp.com">
+    
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <!-- CSS Files -->
@@ -19,12 +36,14 @@
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/responsive.css">
-    
-    <!-- Page-specific CSS -->
     <link rel="stylesheet" href="css/pages/home.css">
     
-    <!-- Favicon -->
+    <!-- Favicon and App Icons -->
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="manifest" href="assets/site.webmanifest">
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="Your Name - Flutter Developer">
@@ -32,43 +51,95 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://yourportfolio.com">
     <meta property="og:image" content="assets/images/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Flutter Developer Portfolio">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Your Name - Flutter Developer">
+    <meta name="twitter:description" content="Professional Flutter developer creating beautiful mobile applications">
+    <meta name="twitter:image" content="assets/images/og-image.jpg">
+    <meta name="twitter:creator" content="@yourusername">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#000000">
+    <meta name="msapplication-TileColor" content="#000000">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://yourportfolio.com">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Your Name",
+      "jobTitle": "Flutter Developer",
+      "description": "Professional Flutter developer creating beautiful mobile applications",
+      "url": "https://yourportfolio.com",
+      "sameAs": [
+        "https://github.com/yourusername",
+        "https://linkedin.com/in/yourusername",
+        "https://twitter.com/yourusername"
+      ],
+      "knowsAbout": ["Flutter", "Dart", "Mobile Development", "iOS", "Android", "Firebase"],
+      "worksFor": {
+        "@type": "Organization",
+        "name": "Freelance"
+      }
+    }
+    </script>
 </head>
 <body>
     <!-- Loading Screen -->
     <div id="loading-screen" class="loading-screen hidden">
         <div class="loading-spinner"></div>
+        <p class="loading-text">Loading Portfolio...</p>
     </div>
 
+    <!-- Connection Status Banner -->
+    <div id="connection-banner" class="connection-banner hidden">
+        <div class="connection-content">
+            <span class="connection-icon">🔴</span>
+            <span id="connection-message">Working offline</span>
+            <button id="connection-retry" class="connection-retry hidden">Retry</button>
+        </div>
+    </div>
+
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+
     <!-- Navigation -->
-    <nav class="navbar" id="navbar">
+    <nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
         <div class="nav-container">
             <div class="nav-logo">
-                <a href="#" onclick="scrollToSection('home')" class="logo-link">Your Name</a>
+                <a href="#" onclick="scrollToSection('home')" class="logo-link" aria-label="Go to home section">Your Name</a>
             </div>
             
-            <div class="nav-menu" id="nav-menu">
-                <a href="#home" class="nav-link active" data-section="home">Home</a>
-                <a href="projects.html" class="nav-link" data-page="projects">Projects</a>
-                <a href="#about" class="nav-link" data-section="about">About</a>
-                <a href="#contact" class="nav-link" data-section="contact">Contact</a>
+            <div class="nav-menu" id="nav-menu" role="menubar">
+                <a href="#home" class="nav-link active" data-section="home" role="menuitem">Home</a>
+                <a href="projects.html" class="nav-link" data-page="projects" role="menuitem">Projects</a>
+                <a href="#about" class="nav-link" data-section="about" role="menuitem">About</a>
+                <a href="#contact" class="nav-link" data-section="contact" role="menuitem">Contact</a>
             </div>
             
-            <div class="nav-toggle" id="nav-toggle">
+            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
                 <span class="bar"></span>
                 <span class="bar"></span>
                 <span class="bar"></span>
-            </div>
+            </button>
         </div>
     </nav>
 
     <!-- Main Content Area -->
-    <main id="main-content" class="main-content">
+    <main id="main-content" class="main-content" role="main">
         <!-- Hero Section -->
-        <section id="home" class="hero-section">
+        <section id="home" class="hero-section" aria-labelledby="hero-title">
             <div class="container">
                 <div class="hero-content">
                     <div class="hero-text">
-                        <h1 class="hero-title">
+                        <h1 id="hero-title" class="hero-title">
                             <span class="hero-greeting">Hello, I'm</span>
                             <span class="hero-name">Your Name</span>
                         </h1>
@@ -85,13 +156,13 @@
                     </div>
                     <div class="hero-image">
                         <div class="hero-image-container">
-                            <div class="profile-image"></div>
+                            <div class="profile-image" role="img" aria-label="Profile photo"></div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="hero-scroll">
-                    <a href="#about" class="scroll-indicator">
+                    <a href="#about" class="scroll-indicator" aria-label="Scroll to about section">
                         <span class="scroll-text">Scroll Down</span>
                         <div class="scroll-arrow"></div>
                     </a>
@@ -100,10 +171,10 @@
         </section>
 
         <!-- About Section -->
-        <section id="about" class="about-section section">
+        <section id="about" class="about-section section" aria-labelledby="about-title">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">About Me</h2>
+                    <h2 id="about-title" class="section-title">About Me</h2>
                     <p class="section-subtitle">Get to know more about my background and expertise</p>
                 </div>
                 
@@ -139,14 +210,14 @@
         </section>
 
         <!-- Featured Projects Section -->
-        <section id="projects" class="featured-projects-section section">
+        <section id="projects" class="featured-projects-section section" aria-labelledby="projects-title">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">Featured Projects</h2>
+                    <h2 id="projects-title" class="section-title">Featured Projects</h2>
                     <p class="section-subtitle">A showcase of my best Flutter applications</p>
                 </div>
                 
-                <div class="projects-grid" id="featuredProjectsGrid">
+                <div class="projects-grid" id="featuredProjectsGrid" role="list">
                     <!-- Loading state -->
                     <div class="project-loading" id="projectsLoading">
                         <div class="loading-spinner"></div>
@@ -161,10 +232,10 @@
         </section>
 
         <!-- Skills Section -->
-        <section id="skills" class="skills-section section">
+        <section id="skills" class="skills-section section" aria-labelledby="skills-title">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">Skills & Expertise</h2>
+                    <h2 id="skills-title" class="section-title">Skills & Expertise</h2>
                     <p class="section-subtitle">Technologies and tools I work with</p>
                 </div>
                 
@@ -174,25 +245,25 @@
                         <div class="skills-list">
                             <div class="skill-item">
                                 <span class="skill-name">Flutter</span>
-                                <div class="skill-level">
+                                <div class="skill-level" role="progressbar" aria-valuenow="95" aria-valuemin="0" aria-valuemax="100" aria-label="Flutter skill level: 95%">
                                     <div class="skill-progress" style="width: 95%"></div>
                                 </div>
                             </div>
                             <div class="skill-item">
                                 <span class="skill-name">Dart</span>
-                                <div class="skill-level">
+                                <div class="skill-level" role="progressbar" aria-valuenow="95" aria-valuemin="0" aria-valuemax="100" aria-label="Dart skill level: 95%">
                                     <div class="skill-progress" style="width: 95%"></div>
                                 </div>
                             </div>
                             <div class="skill-item">
                                 <span class="skill-name">Android (Native)</span>
-                                <div class="skill-level">
+                                <div class="skill-level" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" aria-label="Android skill level: 75%">
                                     <div class="skill-progress" style="width: 75%"></div>
                                 </div>
                             </div>
                             <div class="skill-item">
                                 <span class="skill-name">iOS (Native)</span>
-                                <div class="skill-level">
+                                <div class="skill-level" role="progressbar" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100" aria-label="iOS skill level: 65%">
                                     <div class="skill-progress" style="width: 65%"></div>
                                 </div>
                             </div>
@@ -204,25 +275,25 @@
                         <div class="skills-list">
                             <div class="skill-item">
                                 <span class="skill-name">Firebase</span>
-                                <div class="skill-level">
+                                <div class="skill-level" role="progressbar" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100" aria-label="Firebase skill level: 90%">
                                     <div class="skill-progress" style="width: 90%"></div>
                                 </div>
                             </div>
                             <div class="skill-item">
                                 <span class="skill-name">REST APIs</span>
-                                <div class="skill-level">
+                                <div class="skill-level" role="progressbar" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" aria-label="REST APIs skill level: 85%">
                                     <div class="skill-progress" style="width: 85%"></div>
                                 </div>
                             </div>
                             <div class="skill-item">
                                 <span class="skill-name">SQLite</span>
-                                <div class="skill-level">
+                                <div class="skill-level" role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" aria-label="SQLite skill level: 80%">
                                     <div class="skill-progress" style="width: 80%"></div>
                                 </div>
                             </div>
                             <div class="skill-item">
                                 <span class="skill-name">Node.js</span>
-                                <div class="skill-level">
+                                <div class="skill-level" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" aria-label="Node.js skill level: 70%">
                                     <div class="skill-progress" style="width: 70%"></div>
                                 </div>
                             </div>
@@ -234,25 +305,25 @@
                         <div class="skills-list">
                             <div class="skill-item">
                                 <span class="skill-name">Git & GitHub</span>
-                                <div class="skill-level">
+                                <div class="skill-level" role="progressbar" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100" aria-label="Git & GitHub skill level: 90%">
                                     <div class="skill-progress" style="width: 90%"></div>
                                 </div>
                             </div>
                             <div class="skill-item">
                                 <span class="skill-name">Figma</span>
-                                <div class="skill-level">
+                                <div class="skill-level" role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" aria-label="Figma skill level: 80%">
                                     <div class="skill-progress" style="width: 80%"></div>
                                 </div>
                             </div>
                             <div class="skill-item">
                                 <span class="skill-name">App Store Deployment</span>
-                                <div class="skill-level">
+                                <div class="skill-level" role="progressbar" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" aria-label="App Store Deployment skill level: 85%">
                                     <div class="skill-progress" style="width: 85%"></div>
                                 </div>
                             </div>
                             <div class="skill-item">
                                 <span class="skill-name">CI/CD</span>
-                                <div class="skill-level">
+                                <div class="skill-level" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" aria-label="CI/CD skill level: 75%">
                                     <div class="skill-progress" style="width: 75%"></div>
                                 </div>
                             </div>
@@ -263,10 +334,10 @@
         </section>
 
         <!-- Contact Section -->
-        <section id="contact" class="contact-section section">
+        <section id="contact" class="contact-section section" aria-labelledby="contact-title">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">Let's Work Together</h2>
+                    <h2 id="contact-title" class="section-title">Let's Work Together</h2>
                     <p class="section-subtitle">Ready to bring your mobile app idea to life?</p>
                 </div>
                 
@@ -287,26 +358,30 @@
                     </div>
                     
                     <div class="contact-form-container">
-                        <form id="homeContactForm" class="contact-form">
+                        <form id="homeContactForm" class="contact-form" novalidate>
                             <div class="form-group">
                                 <label for="homeName">Name *</label>
-                                <input type="text" id="homeName" name="name" required>
+                                <input type="text" id="homeName" name="name" required aria-describedby="name-error">
+                                <div id="name-error" class="error-message" role="alert"></div>
                             </div>
                             <div class="form-group">
                                 <label for="homeEmail">Email *</label>
-                                <input type="email" id="homeEmail" name="email" required>
+                                <input type="email" id="homeEmail" name="email" required aria-describedby="email-error">
+                                <div id="email-error" class="error-message" role="alert"></div>
                             </div>
                             <div class="form-group">
                                 <label for="homeSubject">Subject *</label>
-                                <input type="text" id="homeSubject" name="subject" required>
+                                <input type="text" id="homeSubject" name="subject" required aria-describedby="subject-error">
+                                <div id="subject-error" class="error-message" role="alert"></div>
                             </div>
                             <div class="form-group">
                                 <label for="homeMessage">Message *</label>
-                                <textarea id="homeMessage" name="message" rows="4" required></textarea>
+                                <textarea id="homeMessage" name="message" rows="4" required aria-describedby="message-error"></textarea>
+                                <div id="message-error" class="error-message" role="alert"></div>
                             </div>
                             <button type="submit" class="btn btn-primary" id="homeSubmitBtn">
                                 <span class="btn-text">Send Message</span>
-                                <span class="btn-spinner hidden">
+                                <span class="btn-spinner hidden" aria-hidden="true">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M21 12a9 9 0 11-6.219-8.56"/>
                                     </svg>
@@ -325,34 +400,34 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="footer" role="contentinfo">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-left">
                     <p class="footer-text">© 2025 Your Name. All rights reserved.</p>
                 </div>
                 <div class="footer-center">
-                    <div class="footer-links">
+                    <nav class="footer-links" aria-label="Footer navigation">
                         <a href="#home" class="footer-link">Home</a>
                         <a href="projects.html" class="footer-link">Projects</a>
                         <a href="#contact" class="footer-link">Contact</a>
                         <a href="admin.html" class="footer-link" style="opacity: 0.5;">Admin</a>
-                    </div>
+                    </nav>
                 </div>
                 <div class="footer-right">
-                    <div class="social-links">
-                        <a href="https://github.com/yourusername" target="_blank" rel="noopener" class="social-link" aria-label="GitHub">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <div class="social-links" role="list" aria-label="Social media links">
+                        <a href="https://github.com/yourusername" target="_blank" rel="noopener" class="social-link" aria-label="GitHub Profile" role="listitem">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                             </svg>
                         </a>
-                        <a href="https://linkedin.com/in/yourusername" target="_blank" rel="noopener" class="social-link" aria-label="LinkedIn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <a href="https://linkedin.com/in/yourusername" target="_blank" rel="noopener" class="social-link" aria-label="LinkedIn Profile" role="listitem">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                             </svg>
                         </a>
-                        <a href="https://twitter.com/yourusername" target="_blank" rel="noopener" class="social-link" aria-label="Twitter">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <a href="https://twitter.com/yourusername" target="_blank" rel="noopener" class="social-link" aria-label="Twitter Profile" role="listitem">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
                             </svg>
                         </a>
@@ -362,6 +437,21 @@
         </div>
     </footer>
 
+    <!-- Error Boundary -->
+    <div id="error-boundary" class="error-boundary hidden" role="alert">
+        <div class="error-content">
+            <h2>Something went wrong</h2>
+            <p>We encountered an unexpected error. Please refresh the page or contact support if the problem persists.</p>
+            <button id="error-retry" class="btn btn-primary">Retry</button>
+        </div>
+    </div>
+
+    <!-- ARIA Live Region for dynamic announcements -->
+    <div id="live-region" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+    <!-- Environment Configuration (Load before Firebase) -->
+    <script src="js/env-config.js"></script>
+    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -377,31 +467,23 @@
     
     <!-- Home Page Contact Form Integration -->
     <script>
-        // Home page specific functionality
         document.addEventListener('DOMContentLoaded', function() {
             initializeHomePage();
         });
 
         function initializeHomePage() {
-            // Load featured projects from Firebase
             loadFeaturedProjects();
-            
-            // Initialize home contact form
             initializeHomeContactForm();
-            
-            // Track page view
             trackPageView('home');
+            setupErrorBoundary();
+            announcePageLoad();
         }
 
-        /**
-         * Load featured projects from Firebase
-         */
         async function loadFeaturedProjects() {
             const grid = document.getElementById('featuredProjectsGrid');
             const loading = document.getElementById('projectsLoading');
             
             try {
-                // Wait for Firebase to initialize
                 if (typeof firebase === 'undefined') {
                     setTimeout(loadFeaturedProjects, 1000);
                     return;
@@ -422,7 +504,6 @@
                     });
                 });
                 
-                // Hide loading
                 loading.style.display = 'none';
                 
                 if (projects.length === 0) {
@@ -434,10 +515,8 @@
                     return;
                 }
                 
-                // Render projects
                 grid.innerHTML = projects.map(project => createFeaturedProjectCard(project)).join('');
                 
-                // Update apps count in about section
                 const appsCount = document.getElementById('appsCount');
                 if (appsCount && projects.length > 0) {
                     appsCount.textContent = `${projects.length}+`;
@@ -453,9 +532,6 @@
             }
         }
 
-        /**
-         * Create featured project card HTML
-         */
         function createFeaturedProjectCard(project) {
             const imageUrl = project.images && project.images.length > 0 
                 ? project.images[0] 
@@ -466,7 +542,7 @@
                 : '';
             
             return `
-                <article class="project-card featured">
+                <article class="project-card featured" role="listitem">
                     <div class="project-image">
                         <img src="${imageUrl}" alt="${project.title}" loading="lazy">
                         <div class="project-overlay">
@@ -482,9 +558,6 @@
             `;
         }
 
-        /**
-         * Initialize home contact form
-         */
         function initializeHomeContactForm() {
             const form = document.getElementById('homeContactForm');
             if (!form) return;
@@ -495,9 +568,7 @@
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData.entries());
                 
-                // Basic validation
-                if (!data.name?.trim() || !data.email?.trim() || !data.subject?.trim() || !data.message?.trim()) {
-                    showHomeNotification('Please fill in all fields', 'error');
+                if (!validateContactForm(data)) {
                     return;
                 }
                 
@@ -506,28 +577,29 @@
                 const btnSpinner = submitBtn.querySelector('.btn-spinner');
                 
                 try {
-                    // Show loading
                     btnText.textContent = 'Sending...';
                     btnSpinner.classList.remove('hidden');
                     submitBtn.disabled = true;
                     
-                    // Submit to Firebase
-                    await firebase.firestore().collection('contacts').add({
+                    await window.FirebaseService.addContact({
                         name: data.name.trim(),
                         email: data.email.trim().toLowerCase(),
                         subject: data.subject.trim(),
                         message: data.message.trim(),
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        read: false,
                         source: 'home_page'
                     });
                     
                     showHomeNotification('Message sent successfully! I\'ll get back to you soon.', 'success');
                     form.reset();
+                    clearFormErrors();
+                    announceToScreen('Message sent successfully');
                     
                 } catch (error) {
                     console.error('Contact form error:', error);
-                    showHomeNotification('Failed to send message. Please try again.', 'error');
+                    const errorMessage = error.message.includes('Too many') 
+                        ? error.message 
+                        : 'Failed to send message. Please try again.';
+                    showHomeNotification(errorMessage, 'error');
                 } finally {
                     btnText.textContent = 'Send Message';
                     btnSpinner.classList.add('hidden');
@@ -536,12 +608,76 @@
             });
         }
 
-        /**
-         * Show home page notification
-         */
+        function validateContactForm(data) {
+            let isValid = true;
+            
+            clearFormErrors();
+            
+            if (!data.name?.trim()) {
+                showFieldError('name', 'Name is required');
+                isValid = false;
+            }
+            
+            if (!data.email?.trim()) {
+                showFieldError('email', 'Email is required');
+                isValid = false;
+            } else if (!isValidEmail(data.email)) {
+                showFieldError('email', 'Please enter a valid email address');
+                isValid = false;
+            }
+            
+            if (!data.subject?.trim()) {
+                showFieldError('subject', 'Subject is required');
+                isValid = false;
+            }
+            
+            if (!data.message?.trim()) {
+                showFieldError('message', 'Message is required');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+
+        function showFieldError(fieldName, message) {
+            const errorElement = document.getElementById(`${fieldName}-error`);
+            const inputElement = document.getElementById(`home${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}`);
+            
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+            
+            if (inputElement) {
+                inputElement.setAttribute('aria-invalid', 'true');
+                inputElement.style.borderColor = '#ef4444';
+            }
+        }
+
+        function clearFormErrors() {
+            const errorElements = document.querySelectorAll('.error-message');
+            const inputElements = document.querySelectorAll('#homeContactForm input, #homeContactForm textarea');
+            
+            errorElements.forEach(element => {
+                element.textContent = '';
+                element.style.display = 'none';
+            });
+            
+            inputElements.forEach(element => {
+                element.removeAttribute('aria-invalid');
+                element.style.borderColor = '';
+            });
+        }
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
         function showHomeNotification(message, type = 'info') {
             const notification = document.createElement('div');
             notification.className = `home-notification home-notification-${type}`;
+            notification.setAttribute('role', 'alert');
             notification.textContent = message;
             notification.style.cssText = `
                 position: fixed;
@@ -567,28 +703,16 @@
             }, 5000);
         }
 
-        /**
-         * Track page view for analytics
-         */
         async function trackPageView(page) {
             try {
-                if (typeof firebase !== 'undefined' && firebase.firestore) {
-                    await firebase.firestore().collection('analytics').add({
-                        type: 'page_view',
-                        page: page,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                        userAgent: navigator.userAgent,
-                        referrer: document.referrer || 'direct'
-                    });
+                if (window.FirebaseService?.isInitialized()) {
+                    await window.FirebaseService.trackPageView(page);
                 }
             } catch (error) {
                 console.warn('Analytics tracking failed:', error);
             }
         }
 
-        /**
-         * Scroll to section functionality
-         */
         function scrollToSection(sectionId) {
             const section = document.getElementById(sectionId);
             if (section) {
@@ -602,8 +726,138 @@
             }
         }
 
-        // Make functions available globally
+        function setupErrorBoundary() {
+            window.addEventListener('error', (event) => {
+                console.error('Global error:', event.error);
+                showErrorBoundary();
+            });
+
+            window.addEventListener('unhandledrejection', (event) => {
+                console.error('Unhandled promise rejection:', event.reason);
+                showErrorBoundary();
+            });
+
+            document.getElementById('error-retry').addEventListener('click', () => {
+                window.location.reload();
+            });
+        }
+
+        function showErrorBoundary() {
+            document.getElementById('error-boundary').classList.remove('hidden');
+        }
+
+        function announcePageLoad() {
+            announceToScreen('Portfolio page loaded');
+        }
+
+        function announceToScreen(message) {
+            const liveRegion = document.getElementById('live-region');
+            if (liveRegion) {
+                liveRegion.textContent = message;
+                setTimeout(() => liveRegion.textContent = '', 1000);
+            }
+        }
+
         window.scrollToSection = scrollToSection;
     </script>
+    
+    <!-- Additional Styles for new features -->
+    <style>
+        .connection-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #f59e0b;
+            color: white;
+            padding: 0.5rem 1rem;
+            text-align: center;
+            z-index: 9998;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .connection-banner:not(.hidden) {
+            transform: translateY(0);
+        }
+        
+        .connection-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .connection-retry {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        
+        .skip-to-main {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: #000;
+            color: white;
+            padding: 8px;
+            text-decoration: none;
+            z-index: 100;
+            border-radius: 4px;
+        }
+        
+        .skip-to-main:focus {
+            top: 6px;
+        }
+        
+        .error-message {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        
+        .error-boundary {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .error-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        .loading-text {
+            margin-top: 1rem;
+            color: #666;
+        }
+    </style>
 </body>
 </html>

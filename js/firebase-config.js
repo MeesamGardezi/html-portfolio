@@ -1,9 +1,9 @@
-
 /**
  * FIREBASE-CONFIG.JS - Firebase Configuration and Database Operations
  * Portfolio Website - Black & White Minimalistic Theme
  */
 
+// Your Firebase configuration (works for both dev and production)
 const firebaseConfig = {
   apiKey: "AIzaSyCBUX2wKjdwYSw61T5_xGONXj34j5C5q2I",
   authDomain: "mesog-portfolio.firebaseapp.com",
@@ -50,7 +50,7 @@ async function initializeFirebase() {
     storage = firebase.storage();
     
     // Configure Firestore settings
-    configureFirestore();
+    await configureFirestore();
     
     // Set up authentication listener
     setupAuthListener();
@@ -71,21 +71,22 @@ async function initializeFirebase() {
 /**
  * Configure Firestore settings
  */
-function configureFirestore() {
+async function configureFirestore() {
   if (!db) return;
   
-  // Enable offline persistence
-  db.enablePersistence({ synchronizeTabs: true })
-    .then(() => {
-      console.log('Firestore offline persistence enabled');
-    })
-    .catch((error) => {
-      if (error.code === 'failed-precondition') {
-        console.warn('Firestore persistence failed: Multiple tabs open');
-      } else if (error.code === 'unimplemented') {
-        console.warn('Firestore persistence not supported in this browser');
-      }
-    });
+  try {
+    // Enable offline persistence
+    await db.enablePersistence({ synchronizeTabs: true });
+    console.log('Firestore offline persistence enabled');
+  } catch (error) {
+    if (error.code === 'failed-precondition') {
+      console.warn('Firestore persistence failed: Multiple tabs open');
+    } else if (error.code === 'unimplemented') {
+      console.warn('Firestore persistence not supported in this browser');
+    } else {
+      console.warn('Firestore persistence error:', error);
+    }
+  }
   
   // Configure settings
   db.settings({
@@ -104,7 +105,7 @@ function setupAuthListener() {
     
     if (user) {
       console.log('User signed in:', user.email);
-      // Set custom claims or additional user data if needed
+      logSecurityEvent('user_signed_in', { email: user.email });
     } else {
       console.log('User signed out');
     }
@@ -121,18 +122,73 @@ function setupConnectivityMonitoring() {
   window.addEventListener('online', () => {
     FirebaseService.isOnline = true;
     console.log('Connection restored');
+    showConnectionStatus('online');
   });
   
   window.addEventListener('offline', () => {
     FirebaseService.isOnline = false;
     console.log('Connection lost - operating in offline mode');
+    showConnectionStatus('offline');
   });
 }
 
 /**
+ * Show connection status to user
+ */
+function showConnectionStatus(status) {
+  const notification = document.createElement('div');
+  notification.className = 'connection-notification';
+  notification.innerHTML = `
+    <div class="connection-status ${status}">
+      ${status === 'online' ? '🟢 Back online' : '🔴 Working offline'}
+    </div>
+  `;
+  
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    background: ${status === 'online' ? '#22c55e' : '#f59e0b'};
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+  setTimeout(() => {
+    notification.style.transform = 'translateX(400px)';
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
+
+/**
+ * Log security events
+ */
+async function logSecurityEvent(eventType, data = {}) {
+  try {
+    if (db) {
+      await db.collection('security_logs').add({
+        eventType,
+        ...data,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        userAgent: navigator.userAgent,
+        url: window.location.href
+      });
+    }
+  } catch (error) {
+    console.warn('Failed to log security event:', error);
+  }
+}
+
+/**
  * Add authentication state listener
- * @param {Function} callback - Callback function
- * @returns {string} Listener ID
  */
 function addAuthListener(callback) {
   const listenerId = generateListenerId();
@@ -142,7 +198,6 @@ function addAuthListener(callback) {
 
 /**
  * Remove authentication state listener
- * @param {string} listenerId - Listener ID to remove
  */
 function removeAuthListener(listenerId) {
   delete FirebaseService.listeners[listenerId];
@@ -150,7 +205,6 @@ function removeAuthListener(listenerId) {
 
 /**
  * Notify authentication listeners
- * @param {Object|null} user - Current user object
  */
 function notifyAuthListeners(user) {
   Object.values(FirebaseService.listeners).forEach(callback => {
@@ -164,10 +218,57 @@ function notifyAuthListeners(user) {
 
 /**
  * Generate unique listener ID
- * @returns {string} Unique ID
  */
 function generateListenerId() {
   return `listener_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/* ==========================================================================
+   RATE LIMITING & SECURITY
+   ========================================================================== */
+
+const RateLimiter = {
+  attempts: new Map(),
+  
+  isAllowed(key, maxAttempts = 5, windowMs = 300000) { // 5 attempts per 5 minutes
+    const now = Date.now();
+    const attempts = this.attempts.get(key) || [];
+    
+    // Remove old attempts outside the window
+    const validAttempts = attempts.filter(time => now - time < windowMs);
+    
+    if (validAttempts.length >= maxAttempts) {
+      return false;
+    }
+    
+    // Record this attempt
+    validAttempts.push(now);
+    this.attempts.set(key, validAttempts);
+    
+    return true;
+  },
+  
+  reset(key) {
+    this.attempts.delete(key);
+  }
+};
+
+/**
+ * Generate client fingerprint for rate limiting
+ */
+function getClientFingerprint() {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.textBaseline = 'top';
+  ctx.font = '14px Arial';
+  ctx.fillText('Browser fingerprint', 2, 2);
+  
+  return btoa(
+    navigator.userAgent +
+    screen.width + screen.height +
+    new Date().getTimezoneOffset() +
+    canvas.toDataURL()
+  ).substr(0, 16);
 }
 
 /* ==========================================================================
@@ -175,33 +276,49 @@ function generateListenerId() {
    ========================================================================== */
 
 /**
- * Sign in with email and password
- * @param {string} email - User email
- * @param {string} password - User password
- * @returns {Promise<Object>} Sign in result
+ * Sign in with email and password (with rate limiting)
  */
 async function signInWithEmail(email, password) {
   if (!auth) throw new Error('Firebase Auth not initialized');
   
+  const clientId = getClientFingerprint();
+  
+  if (!RateLimiter.isAllowed(`signin_${clientId}`, 5, 300000)) {
+    throw new Error('Too many sign-in attempts. Please try again later.');
+  }
+  
   try {
+    await logSecurityEvent('sign_in_attempt', { email });
+    
     const result = await auth.signInWithEmailAndPassword(email, password);
     console.log('Sign in successful:', result.user.email);
+    
     return { success: true, user: result.user };
   } catch (error) {
     console.error('Sign in failed:', error);
+    
+    await logSecurityEvent('sign_in_failed', { 
+      email, 
+      error: error.code,
+      message: error.message 
+    });
+    
     return { success: false, error: error.message };
   }
 }
 
 /**
  * Sign out current user
- * @returns {Promise<Object>} Sign out result
  */
 async function signOut() {
   if (!auth) throw new Error('Firebase Auth not initialized');
   
   try {
+    const userEmail = auth.currentUser?.email;
     await auth.signOut();
+    
+    await logSecurityEvent('user_signed_out', { email: userEmail });
+    
     console.log('Sign out successful');
     return { success: true };
   } catch (error) {
@@ -212,7 +329,6 @@ async function signOut() {
 
 /**
  * Check if user is authenticated
- * @returns {boolean} Authentication status
  */
 function isAuthenticated() {
   return FirebaseService.user !== null;
@@ -220,10 +336,24 @@ function isAuthenticated() {
 
 /**
  * Get current user
- * @returns {Object|null} Current user object
  */
 function getCurrentUser() {
   return FirebaseService.user;
+}
+
+/**
+ * Get current user claims
+ */
+async function getUserClaims() {
+  if (!FirebaseService.user) return null;
+  
+  try {
+    const idTokenResult = await FirebaseService.user.getIdTokenResult();
+    return idTokenResult.claims;
+  } catch (error) {
+    console.error('Error getting user claims:', error);
+    return null;
+  }
 }
 
 /* ==========================================================================
@@ -232,7 +362,6 @@ function getCurrentUser() {
 
 /**
  * Get all projects from Firestore
- * @returns {Promise<Array>} Array of projects
  */
 async function getProjects() {
   if (!db) {
@@ -265,8 +394,6 @@ async function getProjects() {
 
 /**
  * Get project by ID
- * @param {string} projectId - Project ID
- * @returns {Promise<Object|null>} Project data or null
  */
 async function getProject(projectId) {
   if (!db) throw new Error('Firestore not initialized');
@@ -292,8 +419,6 @@ async function getProject(projectId) {
 
 /**
  * Add new project to Firestore
- * @param {Object} projectData - Project data
- * @returns {Promise<string>} Created project ID
  */
 async function addProject(projectData) {
   if (!db) throw new Error('Firestore not initialized');
@@ -316,9 +441,6 @@ async function addProject(projectData) {
 
 /**
  * Update existing project
- * @param {string} projectId - Project ID
- * @param {Object} updates - Updates to apply
- * @returns {Promise<boolean>} Success status
  */
 async function updateProject(projectId, updates) {
   if (!db) throw new Error('Firestore not initialized');
@@ -340,8 +462,6 @@ async function updateProject(projectId, updates) {
 
 /**
  * Delete project
- * @param {string} projectId - Project ID
- * @returns {Promise<boolean>} Success status
  */
 async function deleteProject(projectId) {
   if (!db) throw new Error('Firestore not initialized');
@@ -359,7 +479,6 @@ async function deleteProject(projectId) {
 
 /**
  * Get featured projects
- * @returns {Promise<Array>} Array of featured projects
  */
 async function getFeaturedProjects() {
   if (!db) return [];
@@ -388,16 +507,107 @@ async function getFeaturedProjects() {
   }
 }
 
+/**
+ * Get contacts from Firestore
+ */
+async function getContacts() {
+  if (!db) throw new Error('Firestore not initialized');
+  if (!isAuthenticated()) throw new Error('User not authenticated');
+  
+  try {
+    const snapshot = await db.collection('contacts')
+      .orderBy('createdAt', 'desc')
+      .get();
+    
+    const contacts = [];
+    snapshot.forEach((doc) => {
+      contacts.push({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate()
+      });
+    });
+    
+    return contacts;
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    throw error;
+  }
+}
+
+/**
+ * Add contact message
+ */
+async function addContact(contactData) {
+  if (!db) throw new Error('Firestore not initialized');
+  
+  // Rate limiting for contact form
+  const clientId = getClientFingerprint();
+  if (!RateLimiter.isAllowed(`contact_${clientId}`, 3, 3600000)) { // 3 submissions per hour
+    throw new Error('Too many contact submissions. Please try again later.');
+  }
+  
+  try {
+    const docRef = await db.collection('contacts').add({
+      ...contactData,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      read: false,
+      userAgent: navigator.userAgent,
+      referrer: document.referrer || 'direct'
+    });
+    
+    console.log('Contact message added with ID:', docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error adding contact:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update contact (mark as read, etc.)
+ */
+async function updateContact(contactId, updates) {
+  if (!db) throw new Error('Firestore not initialized');
+  if (!isAuthenticated()) throw new Error('User not authenticated');
+  
+  try {
+    await db.collection('contacts').doc(contactId).update({
+      ...updates,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    console.log('Contact updated:', contactId);
+    return true;
+  } catch (error) {
+    console.error('Error updating contact:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete contact
+ */
+async function deleteContact(contactId) {
+  if (!db) throw new Error('Firestore not initialized');
+  if (!isAuthenticated()) throw new Error('User not authenticated');
+  
+  try {
+    await db.collection('contacts').doc(contactId).delete();
+    console.log('Contact deleted:', contactId);
+    return true;
+  } catch (error) {
+    console.error('Error deleting contact:', error);
+    throw error;
+  }
+}
+
 /* ==========================================================================
    FIREBASE STORAGE METHODS
    ========================================================================== */
 
 /**
  * Upload image to Firebase Storage
- * @param {File} file - Image file
- * @param {string} path - Storage path
- * @param {Function} progressCallback - Progress callback
- * @returns {Promise<string>} Download URL
  */
 async function uploadImage(file, path, progressCallback) {
   if (!storage) throw new Error('Firebase Storage not initialized');
@@ -436,8 +646,6 @@ async function uploadImage(file, path, progressCallback) {
 
 /**
  * Delete image from Firebase Storage
- * @param {string} url - Image URL to delete
- * @returns {Promise<boolean>} Success status
  */
 async function deleteImage(url) {
   if (!storage) throw new Error('Firebase Storage not initialized');
@@ -460,8 +668,6 @@ async function deleteImage(url) {
 
 /**
  * Listen to projects collection changes
- * @param {Function} callback - Callback function
- * @returns {Function} Unsubscribe function
  */
 function listenToProjects(callback) {
   if (!db) {
@@ -490,13 +696,46 @@ function listenToProjects(callback) {
   return unsubscribe;
 }
 
+/**
+ * Listen to contacts collection changes
+ */
+function listenToContacts(callback) {
+  if (!db) {
+    console.warn('Firestore not available for real-time listening');
+    return () => {};
+  }
+  
+  if (!isAuthenticated()) {
+    console.warn('User not authenticated for contacts listener');
+    return () => {};
+  }
+  
+  const unsubscribe = db.collection('contacts')
+    .orderBy('createdAt', 'desc')
+    .onSnapshot((snapshot) => {
+      const contacts = [];
+      snapshot.forEach((doc) => {
+        contacts.push({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate()
+        });
+      });
+      
+      callback(contacts);
+    }, (error) => {
+      console.error('Error listening to contacts:', error);
+    });
+  
+  return unsubscribe;
+}
+
 /* ==========================================================================
    ANALYTICS AND METRICS
    ========================================================================== */
 
 /**
  * Track page view
- * @param {string} page - Page name
  */
 async function trackPageView(page) {
   if (!db) return;
@@ -516,7 +755,6 @@ async function trackPageView(page) {
 
 /**
  * Track project view
- * @param {string} projectId - Project ID
  */
 async function trackProjectView(projectId) {
   if (!db) return;
@@ -535,6 +773,44 @@ async function trackProjectView(projectId) {
     });
   } catch (error) {
     console.warn('Project view tracking failed:', error);
+  }
+}
+
+/**
+ * Get analytics data
+ */
+async function getAnalytics(dateRange = 30) {
+  if (!db) throw new Error('Firestore not initialized');
+  if (!isAuthenticated()) throw new Error('User not authenticated');
+  
+  try {
+    const dateFrom = new Date();
+    dateFrom.setDate(dateFrom.getDate() - dateRange);
+    
+    const analyticsSnapshot = await db.collection('analytics')
+      .where('timestamp', '>=', dateFrom)
+      .get();
+    
+    const pageViews = analyticsSnapshot.docs.filter(doc => doc.data().type === 'page_view').length;
+    const projectViews = analyticsSnapshot.docs.filter(doc => doc.data().type === 'project_view').length;
+    
+    const projectsSnapshot = await db.collection('projects').get();
+    const totalProjects = projectsSnapshot.size;
+    
+    const contactsSnapshot = await db.collection('contacts')
+      .where('createdAt', '>=', dateFrom)
+      .get();
+    const contactMessages = contactsSnapshot.size;
+    
+    return {
+      pageViews,
+      projectViews,
+      totalProjects,
+      contactMessages
+    };
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
+    throw error;
   }
 }
 
@@ -559,6 +835,7 @@ window.FirebaseService = {
   signOut,
   isAuthenticated,
   getCurrentUser,
+  getUserClaims,
   addAuthListener,
   removeAuthListener,
   
@@ -571,11 +848,23 @@ window.FirebaseService = {
   getFeaturedProjects,
   listenToProjects,
   
+  // Contacts
+  getContacts,
+  addContact,
+  updateContact,
+  deleteContact,
+  listenToContacts,
+  
   // Storage
   uploadImage,
   deleteImage,
   
   // Analytics
   trackPageView,
-  trackProjectView
+  trackProjectView,
+  getAnalytics,
+  
+  // Security
+  RateLimiter,
+  logSecurityEvent
 };
