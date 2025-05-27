@@ -1,0 +1,581 @@
+/* ==========================================================================
+   HOME PAGE CSS - Specific styles for home page
+   Portfolio Website - Black & White Minimalistic Theme
+   ========================================================================== */
+
+/* ==========================================================================
+   HERO SECTION ENHANCEMENTS
+   ========================================================================== */
+
+.hero-section {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(245,245,245,0.3) 100%);
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(0,0,0,0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: float 20s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-text {
+  animation: slideInLeft 0.8s ease-out;
+}
+
+.hero-image {
+  animation: slideInRight 0.8s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.hero-name {
+  background: linear-gradient(135deg, var(--color-black) 0%, var(--color-gray-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+}
+
+.hero-name::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: var(--color-black);
+  animation: expandWidth 1s ease-out 0.5s both;
+}
+
+@keyframes expandWidth {
+  from { width: 0; }
+  to { width: 60px; }
+}
+
+.hero-description {
+  animation: fadeInUp 0.8s ease-out 0.3s both;
+}
+
+.hero-actions {
+  animation: fadeInUp 0.8s ease-out 0.6s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-image-container {
+  position: relative;
+}
+
+.hero-image-container::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background: linear-gradient(45deg, var(--color-black), var(--color-gray-dark));
+  border-radius: var(--border-radius-xl);
+  z-index: -1;
+  opacity: 0.1;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.1; }
+  50% { transform: scale(1.05); opacity: 0.2; }
+}
+
+.profile-image {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Scroll indicator enhancement */
+.scroll-indicator {
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  40% {
+    transform: translateX(-50%) translateY(-10px);
+  }
+  60% {
+    transform: translateX(-50%) translateY(-5px);
+  }
+}
+
+/* ==========================================================================
+   ABOUT SECTION ENHANCEMENTS
+   ========================================================================== */
+
+.about-section {
+  background: var(--color-white);
+  position: relative;
+}
+
+.about-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--color-gray-light) 50%, transparent 100%);
+}
+
+.about-content {
+  animation: fadeIn 0.8s ease-out;
+}
+
+.about-paragraph {
+  position: relative;
+  padding-left: var(--space-4);
+}
+
+.about-paragraph::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--color-black), transparent);
+  opacity: 0.3;
+}
+
+.about-highlights {
+  animation: fadeInUp 0.8s ease-out 0.3s both;
+}
+
+.highlight-item {
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.highlight-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.05), transparent);
+  transition: left 0.6s ease;
+}
+
+.highlight-item:hover::before {
+  left: 100%;
+}
+
+.highlight-title {
+  position: relative;
+  z-index: 1;
+}
+
+/* ==========================================================================
+   FEATURED PROJECTS ENHANCEMENTS
+   ========================================================================== */
+
+.featured-projects-section {
+  background: linear-gradient(180deg, var(--color-white) 0%, var(--color-gray-light) 100%);
+  position: relative;
+}
+
+.projects-grid {
+  animation: fadeIn 0.8s ease-out 0.4s both;
+}
+
+.project-card {
+  animation: slideInUp 0.6s ease-out both;
+}
+
+.project-card:nth-child(1) { animation-delay: 0.1s; }
+.project-card:nth-child(2) { animation-delay: 0.2s; }
+.project-card:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.project-card.featured::before {
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { opacity: 1; }
+  50% { opacity: 0.8; }
+  100% { opacity: 1; }
+}
+
+.tech-tag {
+  animation: popIn 0.3s ease-out both;
+}
+
+.tech-tag:nth-child(1) { animation-delay: 0.1s; }
+.tech-tag:nth-child(2) { animation-delay: 0.2s; }
+.tech-tag:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  80% {
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ==========================================================================
+   SKILLS SECTION ENHANCEMENTS
+   ========================================================================== */
+
+.skills-section {
+  background: var(--color-white);
+  position: relative;
+}
+
+.skills-content {
+  animation: fadeIn 0.8s ease-out 0.2s both;
+}
+
+.skills-category {
+  animation: slideInUp 0.6s ease-out both;
+  position: relative;
+  overflow: hidden;
+}
+
+.skills-category:nth-child(1) { animation-delay: 0.1s; }
+.skills-category:nth-child(2) { animation-delay: 0.2s; }
+.skills-category:nth-child(3) { animation-delay: 0.3s; }
+
+.skills-category::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 0;
+  background: var(--color-black);
+  transition: height 0.6s ease 0.3s;
+}
+
+.skills-category:hover::before {
+  height: 100%;
+}
+
+.skill-progress {
+  position: relative;
+  overflow: hidden;
+}
+
+.skill-progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: skillShimmer 2s ease-in-out infinite;
+}
+
+@keyframes skillShimmer {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: 100%; }
+}
+
+/* ==========================================================================
+   CONTACT SECTION ENHANCEMENTS
+   ========================================================================== */
+
+.contact-section {
+  background: linear-gradient(135deg, var(--color-gray-light) 0%, var(--color-white) 100%);
+  position: relative;
+}
+
+.contact-content {
+  animation: fadeIn 0.8s ease-out 0.2s both;
+}
+
+.contact-item {
+  animation: slideInUp 0.5s ease-out both;
+  position: relative;
+}
+
+.contact-item:nth-child(1) { animation-delay: 0.1s; }
+.contact-item:nth-child(2) { animation-delay: 0.2s; }
+.contact-item:nth-child(3) { animation-delay: 0.3s; }
+
+.contact-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-black);
+  transition: width 0.4s ease;
+}
+
+.contact-item:hover::before {
+  width: 100%;
+}
+
+.contact-actions {
+  animation: fadeInUp 0.8s ease-out 0.4s both;
+}
+
+/* ==========================================================================
+   SECTION DIVIDERS
+   ========================================================================== */
+
+.section + .section {
+  position: relative;
+}
+
+.section + .section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-gray-medium), transparent);
+}
+
+/* ==========================================================================
+   ENHANCED INTERACTIONS
+   ========================================================================== */
+
+/* Button hover enhancements */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+  pointer-events: none;
+}
+
+.btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-primary::before {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary::before {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced link hover effects */
+.contact-link {
+  position: relative;
+}
+
+.contact-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--color-black);
+  transition: width 0.3s ease;
+}
+
+.contact-link:hover::after {
+  width: 100%;
+}
+
+/* ==========================================================================
+   LOADING STATES
+   ========================================================================== */
+
+.section.loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.section.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--color-gray-light);
+  border-top: 3px solid var(--color-black);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: spin 1s linear infinite;
+}
+
+/* ==========================================================================
+   ACCESSIBILITY ENHANCEMENTS
+   ========================================================================== */
+
+/* Focus states */
+.hero-actions .btn:focus,
+.contact-actions .btn:focus {
+  outline: 2px solid var(--color-black);
+  outline-offset: 4px;
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .hero-text,
+  .hero-image,
+  .hero-description,
+  .hero-actions,
+  .about-content,
+  .about-highlights,
+  .projects-grid,
+  .project-card,
+  .skills-content,
+  .skills-category,
+  .contact-content,
+  .contact-item,
+  .contact-actions {
+    animation: none;
+  }
+  
+  .hero-section::before,
+  .profile-image,
+  .scroll-indicator,
+  .skill-progress::after {
+    animation: none;
+  }
+  
+  .highlight-item::before,
+  .contact-item::before,
+  .btn::before {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   MOBILE OPTIMIZATIONS
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .hero-section::before {
+    display: none; /* Remove complex animations on mobile */
+  }
+  
+  .hero-text,
+  .hero-image {
+    animation: fadeIn 0.6s ease-out;
+  }
+  
+  .about-paragraph::before {
+    width: 1px;
+  }
+  
+  .skills-category::before {
+    width: 2px;
+  }
+  
+  /* Reduce animation complexity on mobile */
+  .project-card,
+  .skills-category,
+  .contact-item {
+    animation: fadeIn 0.4s ease-out both;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-name::after {
+    width: 40px;
+  }
+  
+  .about-paragraph {
+    padding-left: var(--space-2);
+  }
+  
+  /* Further reduce animations on small screens */
+  .tech-tag,
+  .skill-progress::after {
+    animation: none;
+  }
+}
