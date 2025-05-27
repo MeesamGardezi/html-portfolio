@@ -1,0 +1,183 @@
+<!-- PROJECTS PAGE CONTENT - Loaded into layout.html -->
+
+<!-- Skip to content link for accessibility -->
+<a href="#projectsGrid" class="skip-to-projects">Skip to projects</a>
+
+<!-- Projects Page Section -->
+<section class="projects-page section">
+  <div class="container">
+    <div class="section-header">
+      <h1 class="section-title">My Projects</h1>
+      <p class="section-subtitle">Explore my Flutter applications and development work</p>
+    </div>
+    
+    <!-- Filter Container -->
+    <div class="filter-container">
+      <div class="filter-group">
+        <label class="filter-label" for="categoryFilter">Category:</label>
+        <select class="filter-select" id="categoryFilter">
+          <option value="all">All Categories</option>
+          <option value="mobile">Mobile Apps</option>
+          <option value="web">Web Apps</option>
+          <option value="game">Games</option>
+          <option value="utility">Utilities</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label class="filter-label" for="techFilter">Technology:</label>
+        <select class="filter-select" id="techFilter">
+          <option value="all">All Technologies</option>
+          <option value="flutter">Flutter</option>
+          <option value="firebase">Firebase</option>
+          <option value="api">REST API</option>
+          <option value="sqlite">SQLite</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label class="filter-label" for="sortFilter">Sort by:</label>
+        <select class="filter-select" id="sortFilter">
+          <option value="latest">Latest</option>
+          <option value="alphabetical">Alphabetical</option>
+          <option value="featured">Featured First</option>
+        </select>
+      </div>
+      
+      <div class="search-box">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search projects..." aria-label="Search projects">
+      </div>
+    </div>
+    
+    <!-- Results Info -->
+    <div class="results-info">
+      <div class="results-count">Loading projects...</div>
+      <div class="view-toggle">
+        <button class="view-btn active" data-view="grid" aria-label="Grid view">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+          </svg>
+        </button>
+        <button class="view-btn" data-view="list" aria-label="List view">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="3" y="5" width="18" height="2" rx="1"/>
+            <rect x="3" y="11" width="18" height="2" rx="1"/>
+            <rect x="3" y="17" width="18" height="2" rx="1"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Projects Grid -->
+    <div class="projects-grid grid-view" id="projectsGrid">
+      <!-- Projects will be loaded here dynamically -->
+    </div>
+    
+    <!-- Pagination -->
+    <div class="pagination" id="pagination">
+      <!-- Pagination will be generated here -->
+    </div>
+  </div>
+</section>
+
+<!-- Screen reader announcements -->
+<div class="sr-announcement" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Loading Template (Hidden) -->
+<template id="loadingTemplate">
+  <div class="project-skeleton">
+    <div class="skeleton-image"></div>
+    <div class="skeleton-content">
+      <div class="skeleton-title"></div>
+      <div class="skeleton-description"></div>
+      <div class="skeleton-description"></div>
+      <div class="skeleton-tags">
+        <div class="skeleton-tag"></div>
+        <div class="skeleton-tag"></div>
+        <div class="skeleton-tag"></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- Project Card Template (Hidden) -->
+<template id="projectCardTemplate">
+  <article class="project-card" data-project-id="">
+    <div class="project-image">
+      <img src="" alt="" loading="lazy">
+      <div class="project-overlay">
+        <a href="#" class="project-link">View Details</a>
+      </div>
+    </div>
+    <div class="project-content">
+      <h3 class="project-title"></h3>
+      <p class="project-description"></p>
+      <div class="project-tech"></div>
+      <div class="project-meta">
+        <span class="project-date"></span>
+        <span class="project-status"></span>
+      </div>
+      <div class="project-actions">
+        <!-- Action buttons will be populated dynamically -->
+      </div>
+    </div>
+  </article>
+</template>
+
+<!-- No Results Template (Hidden) -->
+<template id="noResultsTemplate">
+  <div class="no-results">
+    <div class="no-results-icon">🔍</div>
+    <h3 class="no-results-title">No projects found</h3>
+    <p class="no-results-text">
+      Try adjusting your filters or search terms to find more projects.
+    </p>
+    <button class="clear-filters-btn" onclick="clearAllFilters()">Clear Filters</button>
+  </div>
+</template>
+
+<!-- Error State Template (Hidden) -->
+<template id="errorTemplate">
+  <div class="error-state">
+    <div class="error-icon">⚠️</div>
+    <h3 class="error-title">Unable to load projects</h3>
+    <p class="error-text">
+      Please check your internet connection and try again.
+    </p>
+    <button class="btn btn-primary" onclick="ProjectsPage.initialize()">Retry</button>
+  </div>
+</template>
+
+<!-- Page-specific JavaScript will be loaded by main.js -->
+<script>
+  // Initialize projects page when content is loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    // Small delay to ensure all dependencies are loaded
+    setTimeout(() => {
+      if (window.ProjectsPage) {
+        window.ProjectsPage.initialize();
+      } else {
+        console.warn('ProjectsPage not loaded yet, retrying...');
+        setTimeout(() => {
+          if (window.ProjectsPage) {
+            window.ProjectsPage.initialize();
+          }
+        }, 500);
+      }
+    }, 100);
+  });
+
+  // Handle URL parameters on page load
+  if (window.location.search) {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        if (window.ProjectsPage && window.ProjectsPage.loadFromURL) {
+          window.ProjectsPage.loadFromURL();
+        }
+      }, 200);
+    });
+  }
+</script>
