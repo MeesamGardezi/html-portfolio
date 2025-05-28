@@ -1,6 +1,7 @@
 /**
- * ADMIN.JS - Admin Panel Functionality
+ * ADMIN.JS - Admin Panel Functionality (FIXED VERSION)
  * Portfolio Website - Complete Admin Management System
+ * FIXES: Proper FirebaseService integration, consistent auth flow
  */
 
 // Admin state management
@@ -13,39 +14,63 @@ const AdminPanel = {
   uploadedImages: [],
   technologies: [],
   isLoading: false,
-  unsubscribeListeners: []
+  unsubscribeListeners: [],
+  isInitialized: false
 };
 
 /**
  * Initialize admin panel when DOM is loaded
  */
 document.addEventListener('DOMContentLoaded', function() {
-  initializeAdmin();
+  console.log('DOM loaded, waiting for Firebase...');
+  waitForFirebase();
 });
+
+/**
+ * Wait for Firebase to be ready before initializing
+ */
+function waitForFirebase() {
+  if (typeof firebase !== 'undefined' && window.FirebaseService) {
+    // Check if Firebase is initialized
+    if (window.FirebaseService.isInitialized()) {
+      console.log('Firebase is ready, initializing admin panel');
+      initializeAdmin();
+    } else {
+      // Wait for Firebase to initialize
+      console.log('Waiting for Firebase to initialize...');
+      setTimeout(waitForFirebase, 100);
+    }
+  } else {
+    console.log('Firebase SDK not loaded yet, retrying...');
+    setTimeout(waitForFirebase, 100);
+  }
+}
 
 /**
  * Initialize admin panel functionality
  */
 async function initializeAdmin() {
+  if (AdminPanel.isInitialized) return;
+  
   console.log('Initializing admin panel...');
   
-  // Wait for Firebase to initialize
-  if (!window.FirebaseService?.isInitialized()) {
-    setTimeout(initializeAdmin, 500);
-    return;
+  try {
+    // Setup authentication listener using Firebase SDK directly
+    setupAuthListener();
+    
+    // Initialize components
+    initializeLoginForm();
+    initializeNavigation();
+    initializeProjectModal();
+    initializeImageUpload();
+    initializeTechTags();
+    
+    AdminPanel.isInitialized = true;
+    console.log('Admin panel initialized successfully');
+    
+  } catch (error) {
+    console.error('Failed to initialize admin panel:', error);
   }
-  
-  // Setup authentication listener
-  setupAuthListener();
-  
-  // Initialize components
-  initializeLoginForm();
-  initializeNavigation();
-  initializeProjectModal();
-  initializeImageUpload();
-  initializeTechTags();
-  
-  console.log('Admin panel initialized');
 }
 
 /* ==========================================================================
@@ -56,13 +81,18 @@ async function initializeAdmin() {
  * Setup authentication state listener
  */
 function setupAuthListener() {
+  console.log('Setting up auth listener...');
+  
   firebase.auth().onAuthStateChanged((user) => {
+    console.log('Auth state changed:', user ? user.email : 'No user');
     AdminPanel.currentUser = user;
     
     if (user) {
+      console.log('User is signed in:', user.email);
       showAdminDashboard();
       loadAdminData();
     } else {
+      console.log('User is signed out');
       showLoginScreen();
     }
   });
@@ -72,10 +102,17 @@ function setupAuthListener() {
  * Initialize login form
  */
 function initializeLoginForm() {
+  console.log('Initializing login form...');
   const loginForm = document.getElementById('loginForm');
+  
+  if (!loginForm) {
+    console.error('Login form not found!');
+    return;
+  }
   
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    console.log('Login form submitted');
     
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
@@ -90,41 +127,46 @@ function initializeLoginForm() {
 }
 
 /**
- * Sign in admin user
+ * Sign in admin user (FIXED VERSION)
  */
 async function signInAdmin(email, password) {
   const loginBtn = document.getElementById('loginBtn');
   const originalText = loginBtn.textContent;
   
   try {
+    console.log('Attempting to sign in with email:', email);
     loginBtn.textContent = 'Signing in...';
     loginBtn.disabled = true;
     
-    const result = await firebase.auth().signInWithEmailAndPassword(email, password);
+    // Use FirebaseService for consistent auth with rate limiting
+    const result = await window.FirebaseService.signIn(email, password);
     
-    showNotification('Welcome back!', 'success');
+    if (result.success) {
+      console.log('Sign in successful!');
+      showNotification('Welcome back!', 'success');
+      // Auth state listener will handle the rest
+    } else {
+      console.error('Sign in failed:', result.error);
+      
+      // Show user-friendly error message
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (result.error.includes('user-not-found')) {
+        errorMessage = 'No account found with this email address.';
+      } else if (result.error.includes('wrong-password')) {
+        errorMessage = 'Incorrect password.';
+      } else if (result.error.includes('invalid-email')) {
+        errorMessage = 'Invalid email address.';
+      } else if (result.error.includes('Too many')) {
+        errorMessage = result.error; // Rate limit message
+      }
+      
+      showNotification(errorMessage, 'error');
+    }
     
   } catch (error) {
     console.error('Login error:', error);
-    
-    let errorMessage = 'Login failed. Please try again.';
-    
-    switch (error.code) {
-      case 'auth/user-not-found':
-        errorMessage = 'No account found with this email address.';
-        break;
-      case 'auth/wrong-password':
-        errorMessage = 'Incorrect password.';
-        break;
-      case 'auth/invalid-email':
-        errorMessage = 'Invalid email address.';
-        break;
-      case 'auth/too-many-requests':
-        errorMessage = 'Too many failed attempts. Please try again later.';
-        break;
-    }
-    
-    showNotification(errorMessage, 'error');
+    showNotification('An unexpected error occurred. Please try again.', 'error');
     
   } finally {
     loginBtn.textContent = originalText;
@@ -133,16 +175,32 @@ async function signInAdmin(email, password) {
 }
 
 /**
- * Sign out admin user
+ * Sign out admin user (FIXED VERSION)
  */
 async function signOutAdmin() {
   try {
+    console.log('Signing out...');
+    
     // Clean up listeners
-    AdminPanel.unsubscribeListeners.forEach(unsubscribe => unsubscribe());
+    AdminPanel.unsubscribeListeners.forEach(unsubscribe => {
+      try {
+        unsubscribe();
+      } catch (error) {
+        console.warn('Error unsubscribing listener:', error);
+      }
+    });
     AdminPanel.unsubscribeListeners = [];
     
-    await firebase.auth().signOut();
-    showNotification('Signed out successfully', 'success');
+    // Use FirebaseService for consistent auth
+    const result = await window.FirebaseService.signOut();
+    
+    if (result.success) {
+      console.log('Sign out successful');
+      showNotification('Signed out successfully', 'success');
+    } else {
+      console.error('Sign out failed:', result.error);
+      showNotification('Sign out failed', 'error');
+    }
     
   } catch (error) {
     console.error('Sign out error:', error);
@@ -154,23 +212,42 @@ async function signOutAdmin() {
  * Show login screen
  */
 function showLoginScreen() {
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('adminDashboard').classList.add('hidden');
+  console.log('Showing login screen');
+  const loginScreen = document.getElementById('loginScreen');
+  const adminDashboard = document.getElementById('adminDashboard');
+  
+  if (loginScreen) {
+    loginScreen.style.display = 'flex';
+  }
+  if (adminDashboard) {
+    adminDashboard.classList.add('hidden');
+  }
   
   // Reset form
-  document.getElementById('loginForm').reset();
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.reset();
+  }
 }
 
 /**
  * Show admin dashboard
  */
 function showAdminDashboard() {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('adminDashboard').classList.remove('hidden');
+  console.log('Showing admin dashboard');
+  const loginScreen = document.getElementById('loginScreen');
+  const adminDashboard = document.getElementById('adminDashboard');
+  
+  if (loginScreen) {
+    loginScreen.style.display = 'none';
+  }
+  if (adminDashboard) {
+    adminDashboard.classList.remove('hidden');
+  }
   
   // Update user email display
   const userEmail = document.getElementById('userEmail');
-  if (AdminPanel.currentUser) {
+  if (userEmail && AdminPanel.currentUser) {
     userEmail.textContent = AdminPanel.currentUser.email;
   }
 }
@@ -197,13 +274,18 @@ function initializeNavigation() {
   });
   
   // Logout button
-  document.getElementById('logoutBtn').addEventListener('click', signOutAdmin);
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', signOutAdmin);
+  }
 }
 
 /**
  * Switch between admin sections
  */
 function switchSection(sectionName) {
+  console.log('Switching to section:', sectionName);
+  
   // Hide all sections
   const sections = document.querySelectorAll('.admin-section');
   sections.forEach(section => section.classList.remove('active'));
@@ -237,6 +319,7 @@ function switchSection(sectionName) {
  */
 async function loadAdminData() {
   try {
+    console.log('Loading admin data...');
     showLoadingOverlay();
     
     // Load initial data
@@ -261,11 +344,14 @@ async function loadAdminData() {
  * Setup real-time listeners for data updates
  */
 function setupRealtimeListeners() {
+  console.log('Setting up real-time listeners...');
+  
   // Projects listener
   const projectsUnsubscribe = firebase.firestore()
     .collection('projects')
     .orderBy('createdAt', 'desc')
     .onSnapshot((snapshot) => {
+      console.log('Projects snapshot received');
       AdminPanel.projects = [];
       snapshot.forEach((doc) => {
         AdminPanel.projects.push({
@@ -276,6 +362,8 @@ function setupRealtimeListeners() {
         });
       });
       renderProjects();
+    }, (error) => {
+      console.error('Projects listener error:', error);
     });
   
   // Contacts listener
@@ -283,6 +371,7 @@ function setupRealtimeListeners() {
     .collection('contacts')
     .orderBy('createdAt', 'desc')
     .onSnapshot((snapshot) => {
+      console.log('Contacts snapshot received');
       AdminPanel.contacts = [];
       snapshot.forEach((doc) => {
         AdminPanel.contacts.push({
@@ -292,6 +381,8 @@ function setupRealtimeListeners() {
         });
       });
       renderContacts();
+    }, (error) => {
+      console.error('Contacts listener error:', error);
     });
   
   AdminPanel.unsubscribeListeners.push(projectsUnsubscribe, contactsUnsubscribe);
@@ -306,6 +397,7 @@ function setupRealtimeListeners() {
  */
 async function loadProjects() {
   try {
+    console.log('Loading projects...');
     const snapshot = await firebase.firestore()
       .collection('projects')
       .orderBy('createdAt', 'desc')
@@ -321,11 +413,18 @@ async function loadProjects() {
       });
     });
     
+    console.log(`Loaded ${AdminPanel.projects.length} projects`);
     renderProjects();
     
   } catch (error) {
     console.error('Error loading projects:', error);
-    showNotification('Failed to load projects', 'error');
+    
+    // Check if it's a permission error
+    if (error.code === 'permission-denied') {
+      showNotification('Access denied. Please ensure you are logged in as an admin.', 'error');
+    } else {
+      showNotification('Failed to load projects', 'error');
+    }
   }
 }
 
@@ -334,6 +433,7 @@ async function loadProjects() {
  */
 function renderProjects() {
   const grid = document.getElementById('adminProjectsGrid');
+  if (!grid) return;
   
   if (AdminPanel.projects.length === 0) {
     grid.innerHTML = `
@@ -529,23 +629,33 @@ function initializeProjectModal() {
   const form = document.getElementById('projectForm');
   
   // Show modal
-  addBtn.addEventListener('click', addNewProject);
+  if (addBtn) {
+    addBtn.addEventListener('click', addNewProject);
+  }
   
   // Close modal
-  closeBtn.addEventListener('click', hideProjectModal);
-  cancelBtn.addEventListener('click', hideProjectModal);
+  if (closeBtn) {
+    closeBtn.addEventListener('click', hideProjectModal);
+  }
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', hideProjectModal);
+  }
   
   // Close on background click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) hideProjectModal();
-  });
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) hideProjectModal();
+    });
+  }
   
   // Form submission
-  form.addEventListener('submit', handleProjectSubmit);
+  if (form) {
+    form.addEventListener('submit', handleProjectSubmit);
+  }
   
   // Escape key
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.classList.contains('active')) {
+    if (e.key === 'Escape' && modal && modal.classList.contains('active')) {
       hideProjectModal();
     }
   });
@@ -555,16 +665,22 @@ function initializeProjectModal() {
  * Show project modal
  */
 function showProjectModal() {
-  document.getElementById('projectModal').classList.add('active');
-  document.body.style.overflow = 'hidden';
+  const modal = document.getElementById('projectModal');
+  if (modal) {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
 }
 
 /**
  * Hide project modal
  */
 function hideProjectModal() {
-  document.getElementById('projectModal').classList.remove('active');
-  document.body.style.overflow = '';
+  const modal = document.getElementById('projectModal');
+  if (modal) {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
 }
 
 /**
@@ -671,6 +787,8 @@ function initializeImageUpload() {
   const uploadArea = document.getElementById('uploadArea');
   const imageUpload = document.getElementById('imageUpload');
   
+  if (!uploadArea || !imageUpload) return;
+  
   // Click to upload
   uploadArea.addEventListener('click', () => imageUpload.click());
   
@@ -743,6 +861,7 @@ function handleImageFiles(files) {
  */
 function renderUploadedImages() {
   const container = document.getElementById('uploadedImages');
+  if (!container) return;
   
   container.innerHTML = AdminPanel.uploadedImages.map((image, index) => `
     <div class="uploaded-image">
@@ -800,6 +919,7 @@ async function uploadProjectImages() {
  */
 function initializeTechTags() {
   const techInput = document.getElementById('techInput');
+  if (!techInput) return;
   
   techInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -842,6 +962,7 @@ function removeTechnology(index) {
  */
 function renderTechTags() {
   const container = document.getElementById('techTags');
+  if (!container) return;
   
   container.innerHTML = AdminPanel.technologies.map((tech, index) => `
     <div class="tech-tag-item">
@@ -851,7 +972,10 @@ function renderTechTags() {
   `).join('');
   
   // Update hidden input
-  document.getElementById('projectTechnologies').value = AdminPanel.technologies.join(',');
+  const projectTechnologies = document.getElementById('projectTechnologies');
+  if (projectTechnologies) {
+    projectTechnologies.value = AdminPanel.technologies.join(',');
+  }
 }
 
 /* ==========================================================================
@@ -863,6 +987,7 @@ function renderTechTags() {
  */
 async function loadContacts() {
   try {
+    console.log('Loading contacts...');
     const snapshot = await firebase.firestore()
       .collection('contacts')
       .orderBy('createdAt', 'desc')
@@ -877,6 +1002,7 @@ async function loadContacts() {
       });
     });
     
+    console.log(`Loaded ${AdminPanel.contacts.length} contacts`);
     renderContacts();
     
   } catch (error) {
@@ -890,6 +1016,7 @@ async function loadContacts() {
  */
 function renderContacts() {
   const container = document.getElementById('contactsList');
+  if (!container) return;
   
   if (AdminPanel.contacts.length === 0) {
     container.innerHTML = `
@@ -1003,6 +1130,7 @@ async function deleteContact(contactId) {
  */
 async function loadAnalytics() {
   try {
+    console.log('Loading analytics...');
     const dateRange = document.getElementById('dateRange')?.value || 30;
     const dateFrom = new Date();
     dateFrom.setDate(dateFrom.getDate() - parseInt(dateRange));
@@ -1028,10 +1156,15 @@ async function loadAnalytics() {
     const contactMessages = contactsSnapshot.size;
     
     // Update UI
-    document.getElementById('pageViews').textContent = pageViews.toLocaleString();
-    document.getElementById('projectViews').textContent = projectViews.toLocaleString();
-    document.getElementById('totalProjects').textContent = totalProjects.toLocaleString();
-    document.getElementById('contactMessages').textContent = contactMessages.toLocaleString();
+    const pageViewsEl = document.getElementById('pageViews');
+    const projectViewsEl = document.getElementById('projectViews');
+    const totalProjectsEl = document.getElementById('totalProjects');
+    const contactMessagesEl = document.getElementById('contactMessages');
+    
+    if (pageViewsEl) pageViewsEl.textContent = pageViews.toLocaleString();
+    if (projectViewsEl) projectViewsEl.textContent = projectViews.toLocaleString();
+    if (totalProjectsEl) totalProjectsEl.textContent = totalProjects.toLocaleString();
+    if (contactMessagesEl) contactMessagesEl.textContent = contactMessages.toLocaleString();
     
   } catch (error) {
     console.error('Error loading analytics:', error);
@@ -1047,21 +1180,33 @@ async function loadAnalytics() {
  * Show loading overlay
  */
 function showLoadingOverlay() {
-  document.getElementById('loadingOverlay').classList.remove('hidden');
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) {
+    overlay.classList.remove('hidden');
+  }
 }
 
 /**
  * Hide loading overlay
  */
 function hideLoadingOverlay() {
-  document.getElementById('loadingOverlay').classList.add('hidden');
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) {
+    overlay.classList.add('hidden');
+  }
 }
 
 /**
  * Show notification
  */
 function showNotification(message, type = 'info', duration = 5000) {
+  console.log(`Notification (${type}):`, message);
+  
   const container = document.getElementById('notificationContainer');
+  if (!container) {
+    console.error('Notification container not found');
+    return;
+  }
   
   const notification = document.createElement('div');
   notification.className = `notification ${type}`;
