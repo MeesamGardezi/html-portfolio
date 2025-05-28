@@ -20,7 +20,7 @@ const ENV_CONFIG = {
   CONTACT_LOCATION: 'Your City, Country',
   
   // Personal Information
-  DEVELOPER_NAME: 'Your Name',
+  DEVELOPER_NAME: 'Meesam Gardezi',
   DEVELOPER_TITLE: 'Flutter Developer',
   DEVELOPER_BIO: 'Passionate Flutter developer creating beautiful mobile applications',
   
