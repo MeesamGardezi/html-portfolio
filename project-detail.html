@@ -1,624 +1,332 @@
-<!-- PROJECT DETAIL PAGE CONTENT - Loaded into layout.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Project Details - Flutter Developer Portfolio">
+    <meta name="keywords" content="Flutter Project, Mobile App, Portfolio">
+    <meta name="author" content="Your Name">
+    
+    <title id="page-title">Project Details - Flutter Developer Portfolio</title>
+    
+    <!-- Preconnect to fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/pages/project-detail.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Loading project details...</p>
+    </div>
 
-<!-- Project Detail Section -->
-<section class="project-detail-page section">
-  <div class="container">
-    
-    <!-- Back Navigation -->
-    <div class="back-navigation">
-      <a href="#" onclick="loadPage('projects')" class="back-link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="m15 19-7-7 7-7"/>
-        </svg>
-        Back to Projects
-      </a>
-    </div>
-    
-    <!-- Project Header -->
-    <div class="project-header">
-      <div class="project-header-content">
-        <h1 class="project-title" id="projectTitle">Loading...</h1>
-        <p class="project-subtitle" id="projectSubtitle">Please wait while we load the project details.</p>
-        
-        <div class="project-meta-info">
-          <div class="meta-item">
-            <span class="meta-label">Category:</span>
-            <span class="meta-value" id="projectCategory">-</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Status:</span>
-            <span class="meta-value project-status" id="projectStatus">-</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Created:</span>
-            <span class="meta-value" id="projectDate">-</span>
-          </div>
-        </div>
-        
-        <div class="project-technologies" id="projectTechnologies">
-          <!-- Tech tags will be populated here -->
-        </div>
-        
-        <div class="project-links" id="projectLinks">
-          <!-- Project links will be populated here -->
-        </div>
-      </div>
-    </div>
-    
-    <!-- Project Gallery -->
-    <div class="project-gallery" id="projectGallery">
-      <div class="gallery-main">
-        <img src="" alt="" class="main-image" id="mainImage">
-        <div class="image-controls">
-          <button class="gallery-btn prev-btn" id="prevBtn" aria-label="Previous image">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m15 19-7-7 7-7"/>
-            </svg>
-          </button>
-          <button class="gallery-btn next-btn" id="nextBtn" aria-label="Next image">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m9 5 7 7-7 7"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-      
-      <div class="gallery-thumbnails" id="galleryThumbnails">
-        <!-- Thumbnails will be populated here -->
-      </div>
-    </div>
-    
-    <!-- Project Content -->
-    <div class="project-content-section">
-      <div class="content-grid">
-        
-        <!-- Main Content -->
-        <div class="content-main">
-          
-          <!-- Overview -->
-          <div class="content-block">
-            <h2 class="content-title">Project Overview</h2>
-            <div class="content-text" id="projectOverview">
-              Loading project overview...
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="index.html" class="logo-link" aria-label="Go to home page">Your Name</a>
             </div>
-          </div>
-          
-          <!-- Features -->
-          <div class="content-block" id="featuresBlock">
-            <h2 class="content-title">Key Features</h2>
-            <ul class="features-list" id="featuresList">
-              <!-- Features will be populated here -->
-            </ul>
-          </div>
-          
-          <!-- Development Journey -->
-          <div class="content-block" id="journeyBlock">
-            <h2 class="content-title">Development Journey</h2>
-            <div class="content-text" id="developmentJourney">
-              <!-- Development journey content will be populated here -->
+            
+            <div class="nav-menu" id="nav-menu" role="menubar">
+                <a href="index.html" class="nav-link" data-page="home" role="menuitem">Home</a>
+                <a href="projects.html" class="nav-link active" data-page="projects" role="menuitem">Projects</a>
+                <a href="index.html#about" class="nav-link" data-section="about" role="menuitem">About</a>
+                <a href="index.html#contact" class="nav-link" data-section="contact" role="menuitem">Contact</a>
             </div>
-          </div>
-          
-          <!-- Challenges & Solutions -->
-          <div class="content-block" id="challengesBlock">
-            <h2 class="content-title">Challenges & Solutions</h2>
-            <div class="challenges-list" id="challengesList">
-              <!-- Challenges will be populated here -->
-            </div>
-          </div>
-          
+            
+            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
         </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="main-content" class="main-content" role="main">
         
-        <!-- Sidebar -->
-        <div class="content-sidebar">
-          
-          <!-- Project Stats -->
-          <div class="sidebar-block">
-            <h3 class="sidebar-title">Project Stats</h3>
-            <div class="stats-list">
-              <div class="stat-item">
-                <span class="stat-label">Development Time</span>
-                <span class="stat-value" id="devTime">-</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">Platform</span>
-                <span class="stat-value" id="platform">-</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">Team Size</span>
-                <span class="stat-value" id="teamSize">-</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">Downloads</span>
-                <span class="stat-value" id="downloads">-</span>
-              </div>
+        <!-- Project Detail Section -->
+        <section class="project-detail-page section">
+            <div class="container">
+                
+                <!-- Back Navigation -->
+                <div class="back-navigation">
+                    <a href="projects.html" class="back-link">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m15 19-7-7 7-7"/>
+                        </svg>
+                        Back to Projects
+                    </a>
+                </div>
+                
+                <!-- Project Header -->
+                <div class="project-header">
+                    <div class="project-header-content">
+                        <h1 class="project-title" id="projectTitle">Loading...</h1>
+                        <p class="project-subtitle" id="projectSubtitle">Please wait while we load the project details.</p>
+                        
+                        <div class="project-meta-info">
+                            <div class="meta-item">
+                                <span class="meta-label">Category:</span>
+                                <span class="meta-value" id="projectCategory">-</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Status:</span>
+                                <span class="meta-value project-status" id="projectStatus">-</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Created:</span>
+                                <span class="meta-value" id="projectDate">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="project-technologies" id="projectTechnologies">
+                            <!-- Tech tags will be populated here -->
+                        </div>
+                        
+                        <div class="project-links" id="projectLinks">
+                            <!-- Project links will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Project Gallery -->
+                <div class="project-gallery" id="projectGallery">
+                    <div class="gallery-main">
+                        <img src="" alt="" class="main-image" id="mainImage">
+                        <div class="image-controls">
+                            <button class="gallery-btn prev-btn" id="prevBtn" aria-label="Previous image">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m15 19-7-7 7-7"/>
+                                </svg>
+                            </button>
+                            <button class="gallery-btn next-btn" id="nextBtn" aria-label="Next image">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m9 5 7 7-7 7"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="image-counter" id="imageCounter">1 / 1</div>
+                    </div>
+                    
+                    <div class="gallery-thumbnails" id="galleryThumbnails">
+                        <!-- Thumbnails will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Project Content -->
+                <div class="project-content-section">
+                    <div class="content-grid">
+                        
+                        <!-- Main Content -->
+                        <div class="content-main">
+                            
+                            <!-- Overview -->
+                            <div class="content-block">
+                                <h2 class="content-title">Project Overview</h2>
+                                <div class="content-text" id="projectOverview">
+                                    Loading project overview...
+                                </div>
+                            </div>
+                            
+                            <!-- Features -->
+                            <div class="content-block" id="featuresBlock">
+                                <h2 class="content-title">Key Features</h2>
+                                <ul class="features-list" id="featuresList">
+                                    <!-- Features will be populated here -->
+                                </ul>
+                            </div>
+                            
+                            <!-- Development Journey -->
+                            <div class="content-block" id="journeyBlock">
+                                <h2 class="content-title">Development Journey</h2>
+                                <div class="content-text" id="developmentJourney">
+                                    <!-- Development journey content will be populated here -->
+                                </div>
+                            </div>
+                            
+                            <!-- Challenges & Solutions -->
+                            <div class="content-block" id="challengesBlock">
+                                <h2 class="content-title">Challenges & Solutions</h2>
+                                <div class="challenges-list" id="challengesList">
+                                    <!-- Challenges will be populated here -->
+                                </div>
+                            </div>
+                            
+                        </div>
+                        
+                        <!-- Sidebar -->
+                        <div class="content-sidebar">
+                            
+                            <!-- Project Stats -->
+                            <div class="sidebar-block">
+                                <h3 class="sidebar-title">Project Stats</h3>
+                                <div class="stats-list">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Development Time</span>
+                                        <span class="stat-value" id="devTime">-</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Platform</span>
+                                        <span class="stat-value" id="platform">-</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Team Size</span>
+                                        <span class="stat-value" id="teamSize">-</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Downloads</span>
+                                        <span class="stat-value" id="downloads">-</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Views</span>
+                                        <span class="stat-value" id="viewCount">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Technical Details -->
+                            <div class="sidebar-block">
+                                <h3 class="sidebar-title">Technical Details</h3>
+                                <div class="tech-details" id="techDetails">
+                                    <!-- Technical details will be populated here -->
+                                </div>
+                            </div>
+                            
+                            <!-- Share Project -->
+                            <div class="sidebar-block">
+                                <h3 class="sidebar-title">Share Project</h3>
+                                <div class="share-buttons">
+                                    <button class="share-btn" onclick="shareProject('twitter')" aria-label="Share on Twitter">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="share-btn" onclick="shareProject('linkedin')" aria-label="Share on LinkedIn">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="share-btn" onclick="copyProjectUrl()" aria-label="Copy link">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                        </div>
+                        
+                    </div>
+                </div>
+                
+                <!-- Related Projects -->
+                <div class="related-projects" id="relatedProjects">
+                    <h2 class="section-title">Related Projects</h2>
+                    <div class="related-grid">
+                        <!-- Related projects will be populated here -->
+                    </div>
+                </div>
+                
             </div>
-          </div>
-          
-          <!-- Technical Details -->
-          <div class="sidebar-block">
-            <h3 class="sidebar-title">Technical Details</h3>
-            <div class="tech-details" id="techDetails">
-              <!-- Technical details will be populated here -->
+        </section>
+        
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p class="footer-text">© 2025 Your Name. All rights reserved.</p>
+                </div>
+                <div class="footer-center">
+                    <nav class="footer-links" aria-label="Footer navigation">
+                        <a href="index.html" class="footer-link">Home</a>
+                        <a href="projects.html" class="footer-link">Projects</a>
+                        <a href="index.html#contact" class="footer-link">Contact</a>
+                    </nav>
+                </div>
+                <div class="footer-right">
+                    <div class="social-links" role="list" aria-label="Social media links">
+                        <a href="https://github.com/yourusername" target="_blank" rel="noopener" class="social-link" aria-label="GitHub Profile" role="listitem">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                            </svg>
+                        </a>
+                        <a href="https://linkedin.com/in/yourusername" target="_blank" rel="noopener" class="social-link" aria-label="LinkedIn Profile" role="listitem">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                        </a>
+                        <a href="https://twitter.com/yourusername" target="_blank" rel="noopener" class="social-link" aria-label="Twitter Profile" role="listitem">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
             </div>
-          </div>
-          
-          <!-- Share Project -->
-          <div class="sidebar-block">
-            <h3 class="sidebar-title">Share Project</h3>
-            <div class="share-buttons">
-              <button class="share-btn" onclick="shareProject('twitter')" aria-label="Share on Twitter">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                </svg>
-              </button>
-              <button class="share-btn" onclick="shareProject('linkedin')" aria-label="Share on LinkedIn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                </svg>
-              </button>
-              <button class="share-btn" onclick="copyProjectUrl()" aria-label="Copy link">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          
         </div>
-        
-      </div>
+    </footer>
+
+    <!-- Image Lightbox Modal -->
+    <div class="lightbox-modal" id="lightboxModal">
+        <div class="lightbox-content">
+            <button class="lightbox-close" aria-label="Close lightbox">&times;</button>
+            <img src="" alt="" class="lightbox-image" id="lightboxImage">
+            <div class="lightbox-nav">
+                <button class="lightbox-btn lightbox-prev" aria-label="Previous image">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m15 19-7-7 7-7"/>
+                    </svg>
+                </button>
+                <button class="lightbox-btn lightbox-next" aria-label="Next image">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m9 5 7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="lightbox-info">
+                <h3 class="lightbox-title"></h3>
+                <p class="lightbox-description"></p>
+            </div>
+        </div>
     </div>
-    
-    <!-- Related Projects -->
-    <div class="related-projects" id="relatedProjects">
-      <h2 class="section-title">Related Projects</h2>
-      <div class="related-grid">
-        <!-- Related projects will be populated here -->
-      </div>
+
+    <!-- Error State -->
+    <div class="project-error hidden" id="projectError">
+        <div class="error-content">
+            <h2>Project Not Found</h2>
+            <p>The project you're looking for doesn't exist or has been removed.</p>
+            <a href="projects.html" class="btn btn-primary">Back to Projects</a>
+        </div>
     </div>
-    
-  </div>
-</section>
 
-<!-- Image Lightbox Modal -->
-<div class="lightbox-modal" id="lightboxModal">
-  <div class="lightbox-content">
-    <button class="lightbox-close" aria-label="Close lightbox">&times;</button>
-    <img src="" alt="" class="lightbox-image" id="lightboxImage">
-    <div class="lightbox-nav">
-      <button class="lightbox-btn lightbox-prev" aria-label="Previous image">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="m15 19-7-7 7-7"/>
-        </svg>
-      </button>
-      <button class="lightbox-btn lightbox-next" aria-label="Next image">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="m9 5 7 7-7 7"/>
-        </svg>
-      </button>
-    </div>
-    <div class="lightbox-info">
-      <h3 class="lightbox-title"></h3>
-      <p class="lightbox-description"></p>
-    </div>
-  </div>
-</div>
-
-<!-- Loading State -->
-<div class="project-loading" id="projectLoading">
-  <div class="loading-spinner"></div>
-  <p>Loading project details...</p>
-</div>
-
-<!-- Error State -->
-<div class="project-error hidden" id="projectError">
-  <div class="error-content">
-    <h2>Project Not Found</h2>
-    <p>The project you're looking for doesn't exist or has been removed.</p>
-    <a href="#" onclick="loadPage('projects')" class="btn btn-primary">Back to Projects</a>
-  </div>
-</div>
-
-<!-- Page-specific JavaScript -->
-<script>
-  // Project detail page functionality
-  const ProjectDetail = {
-    currentProject: null,
-    currentImageIndex: 0,
-    images: [],
-    isLoading: false
-  };
-
-  /**
-   * Initialize project detail page
-   */
-  function initializeProjectDetail() {
-    console.log('Initializing project detail page...');
+    <!-- Environment Configuration -->
+    <script src="js/env-config.js"></script>
     
-    // Get project ID from URL or current state
-    const projectId = getProjectIdFromUrl();
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
-    if (projectId) {
-      loadProjectDetail(projectId);
-    } else {
-      showProjectError('No project specified');
-    }
-    
-    // Initialize gallery
-    initializeGallery();
-    
-    // Initialize lightbox
-    initializeLightbox();
-  }
-
-  /**
-   * Get project ID from current URL
-   */
-  function getProjectIdFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('id') || params.get('project');
-  }
-
-  /**
-   * Load project details
-   */
-  async function loadProjectDetail(projectId) {
-    if (ProjectDetail.isLoading) return;
-    
-    try {
-      ProjectDetail.isLoading = true;
-      showProjectLoading();
-      
-      // Load project data (from Firebase in production)
-      const project = await getProjectData(projectId);
-      
-      if (project) {
-        ProjectDetail.currentProject = project;
-        populateProjectDetail(project);
-        hideProjectLoading();
-        
-        // Track page view
-        if (window.FirebaseService) {
-          window.FirebaseService.trackProjectView(projectId);
-        }
-      } else {
-        showProjectError('Project not found');
-      }
-    } catch (error) {
-      console.error('Error loading project:', error);
-      showProjectError('Failed to load project');
-    } finally {
-      ProjectDetail.isLoading = false;
-    }
-  }
-
-  /**
-   * Get project data (mock function - replace with Firebase call)
-   */
-  async function getProjectData(projectId) {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock project data - replace with Firebase call
-    const projects = {
-      'ecommerce-app': {
-        id: 'ecommerce-app',
-        title: 'E-Commerce Mobile App',
-        subtitle: 'Full-featured shopping experience',
-        category: 'Mobile App',
-        status: 'published',
-        createdAt: new Date('2024-01-15'),
-        technologies: ['Flutter', 'Firebase', 'Stripe', 'REST API'],
-        images: [
-          'assets/images/projects/ecommerce-1.jpg',
-          'assets/images/projects/ecommerce-2.jpg',
-          'assets/images/projects/ecommerce-3.jpg'
-        ],
-        links: {
-          github: 'https://github.com/username/ecommerce-app',
-          playStore: 'https://play.google.com/store/apps/details?id=com.example.ecommerce',
-          demo: 'https://demo.example.com'
-        },
-        overview: 'A comprehensive e-commerce solution built with Flutter...',
-        features: [
-          'User authentication and profiles',
-          'Product catalog with search and filters',
-          'Shopping cart and wishlist',
-          'Secure payment processing via Stripe',
-          'Real-time order tracking',
-          'Push notifications',
-          'Admin panel for inventory management'
-        ],
-        stats: {
-          devTime: '4 months',
-          platform: 'iOS & Android',
-          teamSize: '3 developers',
-          downloads: '10K+'
-        }
-      }
-    };
-    
-    return projects[projectId] || null;
-  }
-
-  /**
-   * Populate project detail page with data
-   */
-  function populateProjectDetail(project) {
-    // Update title and metadata
-    document.getElementById('projectTitle').textContent = project.title;
-    document.getElementById('projectSubtitle').textContent = project.subtitle;
-    document.getElementById('projectCategory').textContent = project.category;
-    document.getElementById('projectStatus').textContent = project.status;
-    document.getElementById('projectDate').textContent = Utils.date.format(project.createdAt);
-    
-    // Update page title
-    document.title = `${project.title} - Portfolio`;
-    
-    // Populate technologies
-    const techContainer = document.getElementById('projectTechnologies');
-    techContainer.innerHTML = project.technologies.map(tech => 
-      `<span class="tech-tag">${tech}</span>`
-    ).join('');
-    
-    // Populate project links
-    const linksContainer = document.getElementById('projectLinks');
-    const linkButtons = [];
-    
-    if (project.links.github) {
-      linkButtons.push(`<a href="${project.links.github}" target="_blank" class="project-btn github-btn">GitHub</a>`);
-    }
-    if (project.links.demo) {
-      linkButtons.push(`<a href="${project.links.demo}" target="_blank" class="project-btn demo-btn">Live Demo</a>`);
-    }
-    if (project.links.playStore) {
-      linkButtons.push(`<a href="${project.links.playStore}" target="_blank" class="project-btn store-btn">Play Store</a>`);
-    }
-    
-    linksContainer.innerHTML = linkButtons.join('');
-    
-    // Populate gallery
-    setupGallery(project.images);
-    
-    // Populate content
-    document.getElementById('projectOverview').innerHTML = project.overview;
-    
-    // Populate features
-    const featuresList = document.getElementById('featuresList');
-    featuresList.innerHTML = project.features.map(feature => 
-      `<li class="feature-item">${feature}</li>`
-    ).join('');
-    
-    // Populate stats
-    if (project.stats) {
-      document.getElementById('devTime').textContent = project.stats.devTime;
-      document.getElementById('platform').textContent = project.stats.platform;
-      document.getElementById('teamSize').textContent = project.stats.teamSize;
-      document.getElementById('downloads').textContent = project.stats.downloads;
-    }
-  }
-
-  /**
-   * Setup image gallery
-   */
-  function setupGallery(images) {
-    ProjectDetail.images = images;
-    ProjectDetail.currentImageIndex = 0;
-    
-    if (images.length > 0) {
-      // Set main image
-      const mainImage = document.getElementById('mainImage');
-      mainImage.src = images[0];
-      mainImage.alt = ProjectDetail.currentProject.title;
-      
-      // Setup thumbnails
-      const thumbnailsContainer = document.getElementById('galleryThumbnails');
-      thumbnailsContainer.innerHTML = images.map((image, index) => 
-        `<img src="${image}" alt="Screenshot ${index + 1}" class="thumbnail ${index === 0 ? 'active' : ''}" onclick="changeImage(${index})">`
-      ).join('');
-      
-      // Show/hide navigation buttons
-      updateGalleryButtons();
-    }
-  }
-
-  /**
-   * Change main image
-   */
-  function changeImage(index) {
-    if (index < 0 || index >= ProjectDetail.images.length) return;
-    
-    ProjectDetail.currentImageIndex = index;
-    
-    // Update main image
-    const mainImage = document.getElementById('mainImage');
-    mainImage.src = ProjectDetail.images[index];
-    
-    // Update thumbnails
-    const thumbnails = document.querySelectorAll('.thumbnail');
-    thumbnails.forEach((thumb, i) => {
-      thumb.classList.toggle('active', i === index);
-    });
-    
-    updateGalleryButtons();
-  }
-
-  /**
-   * Update gallery navigation buttons
-   */
-  function updateGalleryButtons() {
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    
-    prevBtn.disabled = ProjectDetail.currentImageIndex === 0;
-    nextBtn.disabled = ProjectDetail.currentImageIndex === ProjectDetail.images.length - 1;
-  }
-
-  /**
-   * Initialize gallery functionality
-   */
-  function initializeGallery() {
-    document.getElementById('prevBtn').addEventListener('click', () => {
-      changeImage(ProjectDetail.currentImageIndex - 1);
-    });
-    
-    document.getElementById('nextBtn').addEventListener('click', () => {
-      changeImage(ProjectDetail.currentImageIndex + 1);
-    });
-  }
-
-  /**
-   * Initialize lightbox functionality
-   */
-  function initializeLightbox() {
-    const lightboxModal = document.getElementById('lightboxModal');
-    const lightboxClose = lightboxModal.querySelector('.lightbox-close');
-    const mainImage = document.getElementById('mainImage');
-    
-    // Open lightbox when main image is clicked
-    mainImage.addEventListener('click', () => {
-      openLightbox(ProjectDetail.currentImageIndex);
-    });
-    
-    // Close lightbox
-    lightboxClose.addEventListener('click', closeLightbox);
-    lightboxModal.addEventListener('click', (e) => {
-      if (e.target === lightboxModal) closeLightbox();
-    });
-    
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-      if (lightboxModal.classList.contains('active')) {
-        if (e.key === 'Escape') closeLightbox();
-        if (e.key === 'ArrowLeft') navigateLightbox(-1);
-        if (e.key === 'ArrowRight') navigateLightbox(1);
-      }
-    });
-  }
-
-  /**
-   * Open lightbox
-   */
-  function openLightbox(index) {
-    const lightboxModal = document.getElementById('lightboxModal');
-    const lightboxImage = document.getElementById('lightboxImage');
-    
-    lightboxImage.src = ProjectDetail.images[index];
-    lightboxModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
-
-  /**
-   * Close lightbox
-   */
-  function closeLightbox() {
-    const lightboxModal = document.getElementById('lightboxModal');
-    lightboxModal.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  /**
-   * Navigate lightbox
-   */
-  function navigateLightbox(direction) {
-    const newIndex = ProjectDetail.currentImageIndex + direction;
-    if (newIndex >= 0 && newIndex < ProjectDetail.images.length) {
-      changeImage(newIndex);
-      openLightbox(newIndex);
-    }
-  }
-
-  /**
-   * Share project functionality
-   */
-  function shareProject(platform) {
-    const project = ProjectDetail.currentProject;
-    const url = window.location.href;
-    const text = `Check out this ${project.title} project!`;
-    
-    switch (platform) {
-      case 'twitter':
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
-        break;
-      case 'linkedin':
-        window.open(`https://linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`);
-        break;
-    }
-  }
-
-  /**
-   * Copy project URL
-   */
-  function copyProjectUrl() {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      // Show success message
-      showNotification('Project URL copied to clipboard!', 'success');
-    });
-  }
-
-  /**
-   * Show loading state
-   */
-  function showProjectLoading() {
-    document.getElementById('projectLoading').classList.remove('hidden');
-  }
-
-  /**
-   * Hide loading state
-   */
-  function hideProjectLoading() {
-    document.getElementById('projectLoading').classList.add('hidden');
-  }
-
-  /**
-   * Show error state
-   */
-  function showProjectError(message) {
-    document.getElementById('projectError').classList.remove('hidden');
-    hideProjectLoading();
-  }
-
-  /**
-   * Show notification
-   */
-  function showNotification(message, type = 'info') {
-    // Implementation similar to home.js
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    notification.style.cssText = `
-      position: fixed;
-      top: 90px;
-      right: 20px;
-      background: ${type === 'success' ? '#44aa44' : '#444444'};
-      color: white;
-      padding: 1rem 1.5rem;
-      border-radius: 8px;
-      z-index: 1000;
-      transform: translateX(400px);
-      transition: transform 0.3s ease;
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => notification.style.transform = 'translateX(0)', 100);
-    setTimeout(() => {
-      notification.style.transform = 'translateX(400px)';
-      setTimeout(() => notification.remove(), 300);
-    }, 3000);
-  }
-
-  // Initialize when DOM is loaded
-  document.addEventListener('DOMContentLoaded', initializeProjectDetail);
-
-  // Export functions for global access
-  window.ProjectDetail = {
-    initialize: initializeProjectDetail,
-    loadProject: loadProjectDetail,
-    changeImage,
-    shareProject,
-    copyProjectUrl
-  };
-</script>
+    <!-- Core JavaScript -->
+    <script src="js/utils.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/pages/project-detail.js"></script>
+</body>
+</html>

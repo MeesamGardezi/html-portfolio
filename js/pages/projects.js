@@ -1,7 +1,7 @@
 /**
- * PROJECTS.JS - Projects Page Logic with Firebase Integration
+ * PROJECTS.JS - Projects Page Logic with Client-Side Filtering (NO INDEXES REQUIRED)
  * Portfolio Website - Black & White Minimalistic Theme
- * FIXED VERSION - Resolves missing functions, pagination, and filter issues
+ * FIXED: All filtering done client-side to avoid Firestore index requirements
  */
 
 // Projects page state and functionality
@@ -66,7 +66,7 @@ function initializeProjectsPage() {
 }
 
 /**
- * Load projects data from Firebase
+ * Load projects data from Firebase (NO INDEX REQUIRED - CLIENT-SIDE FILTERING)
  */
 async function loadProjectsData() {
   try {
@@ -94,16 +94,27 @@ async function loadProjectsData() {
       return;
     }
     
-    // Load projects from Firestore
+    // Check if Firestore is available
+    if (!window.FirebaseService.isServiceAvailable('firestore')) {
+      console.error('Firestore service not available');
+      showErrorState();
+      return;
+    }
+    
+    console.log('Loading all projects from Firestore...');
+    
+    // ✅ SIMPLE QUERY - NO INDEX REQUIRED
+    // Get ALL projects first, then filter client-side
     const snapshot = await firebase.firestore()
       .collection('projects')
-      .where('status', 'in', ['published', 'completed'])
-      .orderBy('createdAt', 'desc')
       .get();
     
-    ProjectsPage.projects = [];
+    console.log(`Retrieved ${snapshot.size} total projects from Firebase`);
+    
+    // Convert to array with date conversion
+    const allProjects = [];
     snapshot.forEach((doc) => {
-      ProjectsPage.projects.push({
+      allProjects.push({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate(),
@@ -111,10 +122,20 @@ async function loadProjectsData() {
       });
     });
     
-    // Apply initial filters
-    ProjectsPage.filteredProjects = [...ProjectsPage.projects];
-    ProjectsPage.isLoading = false;
+    // ✅ CLIENT-SIDE FILTERING (no indexes needed)
+    ProjectsPage.projects = allProjects.filter(project => {
+      // Only show published/completed projects on public page
+      const validStatuses = ['published', 'completed'];
+      return !project.status || validStatuses.includes(project.status);
+    });
     
+    console.log(`Filtered to ${ProjectsPage.projects.length} public projects`);
+    
+    // Apply initial filters and sort
+    ProjectsPage.filteredProjects = [...ProjectsPage.projects];
+    applyFilters();
+    
+    ProjectsPage.isLoading = false;
     hideLoadingState();
     
     // Populate filter options based on real data
@@ -123,7 +144,7 @@ async function loadProjectsData() {
     // Render projects
     renderProjects();
     
-    console.log(`Loaded ${ProjectsPage.projects.length} projects from Firebase`);
+    console.log(`Successfully loaded ${ProjectsPage.projects.length} projects`);
     
   } catch (error) {
     console.error('Error loading projects:', error);
@@ -249,7 +270,7 @@ function handleSearch(query) {
 }
 
 /**
- * Apply all active filters
+ * Apply all active filters (CLIENT-SIDE - NO INDEXES REQUIRED)
  */
 function applyFilters() {
   let filtered = [...ProjectsPage.projects];
@@ -278,14 +299,14 @@ function applyFilters() {
     );
   }
   
-  // Sort projects
+  // Sort projects (CLIENT-SIDE SORTING)
   filtered = sortProjects(filtered, ProjectsPage.currentFilters.sort);
   
   ProjectsPage.filteredProjects = filtered;
 }
 
 /**
- * Sort projects based on criteria
+ * Sort projects based on criteria (CLIENT-SIDE - NO INDEXES REQUIRED)
  */
 function sortProjects(projects, sortBy) {
   switch (sortBy) {
@@ -299,8 +320,11 @@ function sortProjects(projects, sortBy) {
       return projects.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
     case 'featured':
       return projects.sort((a, b) => {
+        // Featured projects first
         if (a.featured && !b.featured) return -1;
         if (!a.featured && b.featured) return 1;
+        
+        // Then by date
         const dateA = a.createdAt || new Date(0);
         const dateB = b.createdAt || new Date(0);
         return dateB - dateA;
@@ -442,13 +466,13 @@ function createProjectCardHTML(project) {
   return `
     <article class="project-card ${project.featured ? 'featured' : ''}" data-project-id="${project.id}">
       <div class="project-image">
-        <img src="${imageUrl}" alt="${project.title}" loading="lazy">
+        <img src="${imageUrl}" alt="${project.title || 'Project'}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1551650975-87deedd944c3?w=600&h=400&fit=crop'">
         <div class="project-overlay">
           <a href="#" onclick="loadProjectDetail('${project.id}')" class="project-link">View Details</a>
         </div>
       </div>
       <div class="project-content">
-        <h3 class="project-title">${project.title}</h3>
+        <h3 class="project-title">${project.title || 'Untitled Project'}</h3>
         <p class="project-description">${project.description || 'No description available'}</p>
         <div class="project-tech">${techTags}</div>
         <div class="project-meta">
@@ -486,12 +510,12 @@ function renderNoResults(container) {
       <p class="no-results-text">
         ${hasActiveFilters 
           ? 'Try adjusting your filters or search terms to find more projects.'
-          : 'No projects have been published yet.'
+          : 'No projects have been published yet. Check back soon!'
         }
       </p>
       ${hasActiveFilters 
         ? '<button class="clear-filters-btn" onclick="clearAllFilters()">Clear Filters</button>'
-        : ''
+        : '<a href="admin.html" class="btn btn-outline">Add Projects</a>'
       }
     </div>
   `;
@@ -721,15 +745,9 @@ function loadProjectDetail(projectId) {
     // Track project view
     trackProjectView(projectId);
     
-    // For now, show project info in alert (will be replaced with modal/page later)
-    const projectInfo = `
-Project: ${project.title}
-Description: ${project.description}
-Technologies: ${project.technologies?.join(', ') || 'None listed'}
-Status: ${project.status || 'Published'}
-    `;
-    
-    alert(`Project Details:\n\n${projectInfo}\n\nProject detail page will be implemented next!`);
+    // For now, navigate to project detail page (to be implemented)
+    const baseUrl = window.location.origin;
+    window.location.href = `project-detail.html?id=${projectId}`;
   }
 }
 
@@ -760,7 +778,7 @@ async function trackProjectView(projectId) {
 }
 
 /* ==========================================================================
-   UTILITY FUNCTIONS (Previously missing)
+   UTILITY FUNCTIONS
    ========================================================================== */
 
 /**
@@ -829,3 +847,4 @@ window.ProjectsPage = {
 window.changePage = changePage;
 window.clearAllFilters = clearAllFilters;
 window.loadProjectDetail = loadProjectDetail;
+window.loadProjectsData = loadProjectsData;

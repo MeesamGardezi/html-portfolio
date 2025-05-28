@@ -465,73 +465,214 @@
     <script src="js/firebase-config.js"></script>
     <script src="js/pages/home.js"></script>
     
-    <!-- Home Page Contact Form Integration -->
+    <!-- Home Page JavaScript Integration (FIXED VERSION) -->
     <script>
+        // Global state for initialization tracking
+        let isHomePageInitialized = false;
+        let firebaseReadyListenerAdded = false;
+
+        /**
+         * Initialize home page when both DOM and Firebase are ready
+         */
         document.addEventListener('DOMContentLoaded', function() {
-            initializeHomePage();
+            console.log('DOM loaded, checking Firebase state...');
+            
+            // Check if Firebase is already ready
+            if (window.FirebaseService && window.FirebaseService.isInitialized()) {
+                console.log('Firebase already initialized, starting home page...');
+                initializeHomePage();
+            } else {
+                console.log('Firebase not ready, waiting for initialization...');
+                waitForFirebase();
+            }
         });
 
-        function initializeHomePage() {
-            loadFeaturedProjects();
-            initializeHomeContactForm();
-            trackPageView('home');
-            setupErrorBoundary();
-            announcePageLoad();
+        /**
+         * Wait for Firebase to be ready
+         */
+        function waitForFirebase() {
+            // Add listener only once
+            if (!firebaseReadyListenerAdded) {
+                firebaseReadyListenerAdded = true;
+                
+                window.addEventListener('firebaseReady', function(event) {
+                    console.log('Firebase ready event received, initializing home page...');
+                    if (!isHomePageInitialized) {
+                        initializeHomePage();
+                    }
+                });
+            }
+            
+            // Also check periodically in case event was missed
+            const checkFirebase = setInterval(() => {
+                if (window.FirebaseService && window.FirebaseService.isInitialized()) {
+                    console.log('Firebase ready (periodic check), initializing home page...');
+                    clearInterval(checkFirebase);
+                    if (!isHomePageInitialized) {
+                        initializeHomePage();
+                    }
+                }
+            }, 500);
+            
+            // Stop checking after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkFirebase);
+                if (!isHomePageInitialized) {
+                    console.warn('Firebase initialization timeout, initializing home page without Firebase features');
+                    initializeHomePage();
+                }
+            }, 10000);
         }
 
+        /**
+         * Initialize home page functionality
+         */
+        function initializeHomePage() {
+            if (isHomePageInitialized) {
+                console.log('Home page already initialized, skipping...');
+                return;
+            }
+            
+            console.log('Initializing home page...');
+            isHomePageInitialized = true;
+            
+            // Load featured projects (with Firebase check)
+            loadFeaturedProjects();
+            
+            // Initialize contact form
+            initializeHomeContactForm();
+            
+            // Track page view
+            trackPageView('home');
+            
+            // Setup error boundary
+            setupErrorBoundary();
+            
+            // Announce page load for accessibility
+            announcePageLoad();
+            
+            console.log('Home page initialization complete');
+        }
+
+        /**
+         * Load featured projects with client-side filtering (NO INDEX REQUIRED)
+         */
         async function loadFeaturedProjects() {
             const grid = document.getElementById('featuredProjectsGrid');
             const loading = document.getElementById('projectsLoading');
             
             try {
-                if (typeof firebase === 'undefined') {
-                    setTimeout(loadFeaturedProjects, 1000);
+                // Check if Firebase is available
+                if (!window.FirebaseService || !window.FirebaseService.isInitialized()) {
+                    console.log('Firebase not available, showing placeholder projects...');
+                    showPlaceholderProjects(grid, loading);
                     return;
                 }
                 
+                console.log('Loading featured projects from Firebase...');
+                
+                // Get ALL projects first (no compound query = no index needed)
                 const snapshot = await firebase.firestore()
                     .collection('projects')
-                    .where('featured', '==', true)
-                    .orderBy('createdAt', 'desc')
-                    .limit(3)
                     .get();
                 
-                const projects = [];
+                const allProjects = [];
                 snapshot.forEach((doc) => {
-                    projects.push({
+                    allProjects.push({
                         id: doc.id,
-                        ...doc.data()
+                        ...doc.data(),
+                        createdAt: doc.data().createdAt?.toDate()
                     });
                 });
                 
-                loading.style.display = 'none';
+                console.log(`Retrieved ${allProjects.length} projects from Firebase`);
                 
-                if (projects.length === 0) {
+                // CLIENT-SIDE FILTERING (no indexes needed)
+                const featuredProjects = allProjects
+                    .filter(project => {
+                        // Filter for featured projects
+                        const isFeatured = project.featured === true;
+                        
+                        // Filter for published/completed status
+                        const validStatuses = ['published', 'completed'];
+                        const hasValidStatus = !project.status || validStatuses.includes(project.status);
+                        
+                        return isFeatured && hasValidStatus;
+                    })
+                    .sort((a, b) => {
+                        // Sort by creation date (newest first)
+                        const dateA = a.createdAt || new Date(0);
+                        const dateB = b.createdAt || new Date(0);
+                        return dateB - dateA;
+                    })
+                    .slice(0, 3); // Take only first 3
+                
+                console.log(`Found ${featuredProjects.length} featured projects`);
+                
+                // Hide loading state
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+                
+                // Render projects
+                if (featuredProjects.length === 0) {
                     grid.innerHTML = `
                         <div class="no-featured-projects">
                             <p>Featured projects will appear here once added from the admin panel.</p>
+                            <a href="admin.html" class="btn btn-outline">Go to Admin Panel</a>
                         </div>
                     `;
-                    return;
-                }
-                
-                grid.innerHTML = projects.map(project => createFeaturedProjectCard(project)).join('');
-                
-                const appsCount = document.getElementById('appsCount');
-                if (appsCount && projects.length > 0) {
-                    appsCount.textContent = `${projects.length}+`;
+                } else {
+                    grid.innerHTML = featuredProjects.map(project => createFeaturedProjectCard(project)).join('');
+                    
+                    // Update apps count if available
+                    const appsCount = document.getElementById('appsCount');
+                    if (appsCount) {
+                        const totalPublished = allProjects.filter(p => 
+                            !p.status || ['published', 'completed'].includes(p.status)
+                        ).length;
+                        appsCount.textContent = `${totalPublished}+`;
+                    }
                 }
                 
             } catch (error) {
                 console.error('Error loading featured projects:', error);
-                loading.innerHTML = `
+                
+                // Hide loading and show error
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+                
+                grid.innerHTML = `
                     <div class="project-error">
-                        <p>Unable to load projects. Please try again later.</p>
+                        <h3>Unable to load projects</h3>
+                        <p>Please check your connection and try again.</p>
+                        <button onclick="loadFeaturedProjects()" class="btn btn-outline">Retry</button>
                     </div>
                 `;
             }
         }
 
+        /**
+         * Show placeholder projects when Firebase is not available
+         */
+        function showPlaceholderProjects(grid, loading) {
+            if (loading) {
+                loading.style.display = 'none';
+            }
+            
+            grid.innerHTML = `
+                <div class="no-featured-projects">
+                    <h3>Projects Loading...</h3>
+                    <p>Please wait while we connect to the database.</p>
+                    <button onclick="loadFeaturedProjects()" class="btn btn-outline">Retry</button>
+                </div>
+            `;
+        }
+
+        /**
+         * Create featured project card HTML
+         */
         function createFeaturedProjectCard(project) {
             const imageUrl = project.images && project.images.length > 0 
                 ? project.images[0] 
@@ -544,20 +685,23 @@
             return `
                 <article class="project-card featured" role="listitem">
                     <div class="project-image">
-                        <img src="${imageUrl}" alt="${project.title}" loading="lazy">
+                        <img src="${imageUrl}" alt="${project.title || 'Project'}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1551650975-87deedd944c3?w=600&h=400&fit=crop'">
                         <div class="project-overlay">
                             <a href="projects.html#${project.id}" class="project-link">View Details</a>
                         </div>
                     </div>
                     <div class="project-content">
-                        <h3 class="project-title">${project.title}</h3>
-                        <p class="project-description">${project.description}</p>
+                        <h3 class="project-title">${project.title || 'Untitled Project'}</h3>
+                        <p class="project-description">${project.description || 'No description available'}</p>
                         <div class="project-tech">${techTags}</div>
                     </div>
                 </article>
             `;
         }
 
+        /**
+         * Initialize home contact form
+         */
         function initializeHomeContactForm() {
             const form = document.getElementById('homeContactForm');
             if (!form) return;
@@ -581,6 +725,11 @@
                     btnSpinner.classList.remove('hidden');
                     submitBtn.disabled = true;
                     
+                    // Check if Firebase is available
+                    if (!window.FirebaseService || !window.FirebaseService.isInitialized()) {
+                        throw new Error('Contact service is temporarily unavailable. Please try again later or email directly.');
+                    }
+                    
                     await window.FirebaseService.addContact({
                         name: data.name.trim(),
                         email: data.email.trim().toLowerCase(),
@@ -598,7 +747,9 @@
                     console.error('Contact form error:', error);
                     const errorMessage = error.message.includes('Too many') 
                         ? error.message 
-                        : 'Failed to send message. Please try again.';
+                        : error.message.includes('temporarily unavailable')
+                        ? error.message
+                        : 'Failed to send message. Please try again or email directly.';
                     showHomeNotification(errorMessage, 'error');
                 } finally {
                     btnText.textContent = 'Send Message';
@@ -608,6 +759,9 @@
             });
         }
 
+        /**
+         * Validate contact form
+         */
         function validateContactForm(data) {
             let isValid = true;
             
@@ -639,6 +793,9 @@
             return isValid;
         }
 
+        /**
+         * Show field error
+         */
         function showFieldError(fieldName, message) {
             const errorElement = document.getElementById(`${fieldName}-error`);
             const inputElement = document.getElementById(`home${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}`);
@@ -654,6 +811,9 @@
             }
         }
 
+        /**
+         * Clear form errors
+         */
         function clearFormErrors() {
             const errorElements = document.querySelectorAll('.error-message');
             const inputElements = document.querySelectorAll('#homeContactForm input, #homeContactForm textarea');
@@ -669,11 +829,17 @@
             });
         }
 
+        /**
+         * Validate email address
+         */
         function isValidEmail(email) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             return emailRegex.test(email);
         }
 
+        /**
+         * Show home notification
+         */
         function showHomeNotification(message, type = 'info') {
             const notification = document.createElement('div');
             notification.className = `home-notification home-notification-${type}`;
@@ -699,10 +865,17 @@
             setTimeout(() => notification.style.transform = 'translateX(0)', 100);
             setTimeout(() => {
                 notification.style.transform = 'translateX(400px)';
-                setTimeout(() => notification.remove(), 300);
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
             }, 5000);
         }
 
+        /**
+         * Track page view for analytics
+         */
         async function trackPageView(page) {
             try {
                 if (window.FirebaseService?.isInitialized()) {
@@ -713,6 +886,9 @@
             }
         }
 
+        /**
+         * Setup error boundary
+         */
         function setupErrorBoundary() {
             window.addEventListener('error', (event) => {
                 console.error('Global error:', event.error);
@@ -724,19 +900,34 @@
                 showErrorBoundary();
             });
 
-            document.getElementById('error-retry').addEventListener('click', () => {
-                window.location.reload();
-            });
+            const retryBtn = document.getElementById('error-retry');
+            if (retryBtn) {
+                retryBtn.addEventListener('click', () => {
+                    window.location.reload();
+                });
+            }
         }
 
+        /**
+         * Show error boundary
+         */
         function showErrorBoundary() {
-            document.getElementById('error-boundary').classList.remove('hidden');
+            const errorBoundary = document.getElementById('error-boundary');
+            if (errorBoundary) {
+                errorBoundary.classList.remove('hidden');
+            }
         }
 
+        /**
+         * Announce page load for accessibility
+         */
         function announcePageLoad() {
             announceToScreen('Portfolio page loaded');
         }
 
+        /**
+         * Announce to screen readers
+         */
         function announceToScreen(message) {
             const liveRegion = document.getElementById('live-region');
             if (liveRegion) {
@@ -744,6 +935,9 @@
                 setTimeout(() => liveRegion.textContent = '', 1000);
             }
         }
+
+        // Make loadFeaturedProjects available globally for retry buttons
+        window.loadFeaturedProjects = loadFeaturedProjects;
     </script>
     
     <!-- Additional Styles for new features -->
@@ -842,6 +1036,30 @@
         .loading-text {
             margin-top: 1rem;
             color: #666;
+        }
+
+        .no-featured-projects {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            grid-column: 1 / -1;
+        }
+
+        .no-featured-projects h3 {
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .project-error {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            grid-column: 1 / -1;
+        }
+
+        .project-error h3 {
+            color: #ef4444;
+            margin-bottom: 0.5rem;
         }
     </style>
 </body>

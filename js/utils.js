@@ -1,6 +1,7 @@
 /**
- * UTILS.JS - Utility Functions
+ * UTILS.JS - Utility Functions (FIXED VERSION)
  * Portfolio Website - Black & White Minimalistic Theme
+ * FIXES: Fixed requestFrame function and improved error handling
  */
 
 /**
@@ -75,16 +76,19 @@ Utils.animation.throttle = function(func, limit) {
 };
 
 /**
- * Request animation frame with fallback
+ * Request animation frame with fallback (FIXED VERSION)
  * @param {Function} callback - Callback function
  * @returns {number} Request ID
  */
 Utils.animation.requestFrame = function(callback) {
-  return window.requestAnimationFrame || 
-         window.webkitRequestAnimationFrame || 
-         window.mozRequestAnimationFrame || 
-         function(callback) { window.setTimeout(callback, 1000 / 60); };
-}(callback);
+  const requestAnimFrame = window.requestAnimationFrame || 
+                          window.webkitRequestAnimationFrame || 
+                          window.mozRequestAnimationFrame || 
+                          function(callback) { 
+                            return window.setTimeout(callback, 1000 / 60); 
+                          };
+  return requestAnimFrame(callback);
+};
 
 /**
  * Cancel animation frame with fallback
@@ -125,10 +129,12 @@ Utils.animation.smoothScroll = function(target, offset = 0, duration = 500) {
     const timeElapsed = currentTime - startTime;
     const run = ease(timeElapsed, startPosition, distance, duration);
     window.scrollTo(0, run);
-    if (timeElapsed < duration) requestAnimationFrame(animation);
+    if (timeElapsed < duration) {
+      Utils.animation.requestFrame(animation);
+    }
   }
   
-  requestAnimationFrame(animation);
+  Utils.animation.requestFrame(animation);
 };
 
 /* ==========================================================================
@@ -142,6 +148,8 @@ Utils.animation.smoothScroll = function(target, offset = 0, duration = 500) {
  * @returns {boolean} True if element is visible
  */
 Utils.dom.isInViewport = function(element, threshold = 0) {
+  if (!element) return false;
+  
   const rect = element.getBoundingClientRect();
   const windowHeight = window.innerHeight || document.documentElement.clientHeight;
   const windowWidth = window.innerWidth || document.documentElement.clientWidth;
@@ -155,10 +163,10 @@ Utils.dom.isInViewport = function(element, threshold = 0) {
   
   const visibleHeight = Math.min(rect.bottom, windowHeight) - Math.max(rect.top, 0);
   const visibleWidth = Math.min(rect.right, windowWidth) - Math.max(rect.left, 0);
-  const visibleArea = visibleHeight * visibleWidth;
+  const visibleArea = Math.max(0, visibleHeight) * Math.max(0, visibleWidth);
   const totalArea = rect.height * rect.width;
   
-  return (visibleArea / totalArea) >= threshold;
+  return totalArea > 0 ? (visibleArea / totalArea) >= threshold : false;
 };
 
 /**
@@ -168,11 +176,13 @@ Utils.dom.isInViewport = function(element, threshold = 0) {
  * @param {number} delay - Delay between elements (default: 100ms)
  */
 Utils.dom.addClassWithDelay = function(elements, className, delay = 100) {
-  const elementList = elements.length ? elements : [elements];
+  const elementList = elements.length ? Array.from(elements) : [elements];
   elementList.forEach((element, index) => {
-    setTimeout(() => {
-      element.classList.add(className);
-    }, index * delay);
+    if (element && element.classList) {
+      setTimeout(() => {
+        element.classList.add(className);
+      }, index * delay);
+    }
   });
 };
 
@@ -184,25 +194,30 @@ Utils.dom.addClassWithDelay = function(elements, className, delay = 100) {
  * @returns {Element} Created element
  */
 Utils.dom.createElement = function(tag, attributes = {}, content = '') {
-  const element = document.createElement(tag);
-  
-  Object.entries(attributes).forEach(([key, value]) => {
-    if (key === 'className') {
-      element.className = value;
-    } else if (key === 'dataset') {
-      Object.entries(value).forEach(([dataKey, dataValue]) => {
-        element.dataset[dataKey] = dataValue;
-      });
-    } else {
-      element.setAttribute(key, value);
+  try {
+    const element = document.createElement(tag);
+    
+    Object.entries(attributes).forEach(([key, value]) => {
+      if (key === 'className') {
+        element.className = value;
+      } else if (key === 'dataset') {
+        Object.entries(value).forEach(([dataKey, dataValue]) => {
+          element.dataset[dataKey] = dataValue;
+        });
+      } else {
+        element.setAttribute(key, value);
+      }
+    });
+    
+    if (content) {
+      element.innerHTML = content;
     }
-  });
-  
-  if (content) {
-    element.innerHTML = content;
+    
+    return element;
+  } catch (error) {
+    console.error('Error creating element:', error);
+    return null;
   }
-  
-  return element;
 };
 
 /**
@@ -211,6 +226,8 @@ Utils.dom.createElement = function(tag, attributes = {}, content = '') {
  * @param {number} duration - Animation duration (default: 300ms)
  */
 Utils.dom.removeWithAnimation = function(element, duration = 300) {
+  if (!element || !element.parentNode) return;
+  
   element.style.transition = `opacity ${duration}ms ease-out`;
   element.style.opacity = '0';
   
@@ -231,6 +248,7 @@ Utils.dom.removeWithAnimation = function(element, duration = 300) {
  * @returns {string} Capitalized string
  */
 Utils.string.capitalize = function(str) {
+  if (!str || typeof str !== 'string') return '';
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
@@ -240,6 +258,7 @@ Utils.string.capitalize = function(str) {
  * @returns {string} Kebab-case string
  */
 Utils.string.toKebabCase = function(str) {
+  if (!str || typeof str !== 'string') return '';
   return str
     .replace(/([a-z])([A-Z])/g, '$1-$2')
     .replace(/[\s_]+/g, '-')
@@ -252,6 +271,7 @@ Utils.string.toKebabCase = function(str) {
  * @returns {string} CamelCase string
  */
 Utils.string.toCamelCase = function(str) {
+  if (!str || typeof str !== 'string') return '';
   return str
     .replace(/[-_\s]+(.)?/g, (_, c) => c ? c.toUpperCase() : '')
     .replace(/^[A-Z]/, c => c.toLowerCase());
@@ -265,6 +285,7 @@ Utils.string.toCamelCase = function(str) {
  * @returns {string} Truncated string
  */
 Utils.string.truncate = function(str, length, suffix = '...') {
+  if (!str || typeof str !== 'string') return '';
   if (str.length <= length) return str;
   return str.substring(0, length - suffix.length) + suffix;
 };
@@ -275,6 +296,7 @@ Utils.string.truncate = function(str, length, suffix = '...') {
  * @returns {string} Escaped string
  */
 Utils.string.escapeHtml = function(str) {
+  if (!str || typeof str !== 'string') return '';
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
@@ -290,6 +312,7 @@ Utils.string.escapeHtml = function(str) {
  * @returns {Array} Array without duplicates
  */
 Utils.array.unique = function(arr) {
+  if (!Array.isArray(arr)) return [];
   return [...new Set(arr)];
 };
 
@@ -300,6 +323,7 @@ Utils.array.unique = function(arr) {
  * @returns {Array} Array of chunks
  */
 Utils.array.chunk = function(arr, size) {
+  if (!Array.isArray(arr) || size <= 0) return [];
   const chunks = [];
   for (let i = 0; i < arr.length; i += size) {
     chunks.push(arr.slice(i, i + size));
@@ -313,6 +337,7 @@ Utils.array.chunk = function(arr, size) {
  * @returns {Array} Shuffled array
  */
 Utils.array.shuffle = function(arr) {
+  if (!Array.isArray(arr)) return [];
   const shuffled = [...arr];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -328,6 +353,7 @@ Utils.array.shuffle = function(arr) {
  * @returns {Object} Grouped object
  */
 Utils.array.groupBy = function(arr, key) {
+  if (!Array.isArray(arr)) return {};
   return arr.reduce((groups, item) => {
     const group = typeof key === 'function' ? key(item) : item[key];
     groups[group] = groups[group] || [];
@@ -347,20 +373,27 @@ Utils.array.groupBy = function(arr, key) {
  * @returns {string} Formatted date string
  */
 Utils.date.format = function(date, format = 'MMM DD, YYYY') {
-  const d = new Date(date);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
-  const replacements = {
-    'YYYY': d.getFullYear(),
-    'YY': d.getFullYear().toString().slice(-2),
-    'MMM': months[d.getMonth()],
-    'MM': String(d.getMonth() + 1).padStart(2, '0'),
-    'DD': String(d.getDate()).padStart(2, '0'),
-    'D': d.getDate()
-  };
-  
-  return format.replace(/YYYY|YY|MMM|MM|DD|D/g, match => replacements[match]);
+  try {
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return 'Invalid date';
+    
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    const replacements = {
+      'YYYY': d.getFullYear(),
+      'YY': d.getFullYear().toString().slice(-2),
+      'MMM': months[d.getMonth()],
+      'MM': String(d.getMonth() + 1).padStart(2, '0'),
+      'DD': String(d.getDate()).padStart(2, '0'),
+      'D': d.getDate()
+    };
+    
+    return format.replace(/YYYY|YY|MMM|MM|DD|D/g, match => replacements[match]);
+  } catch (error) {
+    console.error('Date formatting error:', error);
+    return 'Invalid date';
+  }
 };
 
 /**
@@ -369,21 +402,26 @@ Utils.date.format = function(date, format = 'MMM DD, YYYY') {
  * @returns {string} Relative time string
  */
 Utils.date.getRelativeTime = function(date) {
-  const now = new Date();
-  const diff = now - new Date(date);
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  const months = Math.floor(days / 30);
-  const years = Math.floor(days / 365);
-  
-  if (years > 0) return `${years} year${years > 1 ? 's' : ''} ago`;
-  if (months > 0) return `${months} month${months > 1 ? 's' : ''} ago`;
-  if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
-  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-  if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
-  return 'Just now';
+  try {
+    const now = new Date();
+    const diff = now - new Date(date);
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const months = Math.floor(days / 30);
+    const years = Math.floor(days / 365);
+    
+    if (years > 0) return `${years} year${years > 1 ? 's' : ''} ago`;
+    if (months > 0) return `${months} month${months > 1 ? 's' : ''} ago`;
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    return 'Just now';
+  } catch (error) {
+    console.error('Relative time calculation error:', error);
+    return 'Unknown time';
+  }
 };
 
 /* ==========================================================================
@@ -398,6 +436,10 @@ Utils.date.getRelativeTime = function(date) {
  */
 Utils.storage.set = function(key, value) {
   try {
+    if (typeof Storage === 'undefined') {
+      console.warn('localStorage not supported');
+      return false;
+    }
     localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch (error) {
@@ -414,6 +456,9 @@ Utils.storage.set = function(key, value) {
  */
 Utils.storage.get = function(key, defaultValue = null) {
   try {
+    if (typeof Storage === 'undefined') {
+      return defaultValue;
+    }
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : defaultValue;
   } catch (error) {
@@ -429,6 +474,9 @@ Utils.storage.get = function(key, defaultValue = null) {
  */
 Utils.storage.remove = function(key) {
   try {
+    if (typeof Storage === 'undefined') {
+      return false;
+    }
     localStorage.removeItem(key);
     return true;
   } catch (error) {
@@ -443,6 +491,9 @@ Utils.storage.remove = function(key) {
  */
 Utils.storage.clear = function() {
   try {
+    if (typeof Storage === 'undefined') {
+      return false;
+    }
     localStorage.clear();
     return true;
   } catch (error) {
@@ -461,6 +512,7 @@ Utils.storage.clear = function() {
  * @returns {boolean} True if valid email
  */
 Utils.validation.isEmail = function(email) {
+  if (!email || typeof email !== 'string') return false;
   const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return pattern.test(email);
 };
@@ -471,6 +523,7 @@ Utils.validation.isEmail = function(email) {
  * @returns {boolean} True if valid URL
  */
 Utils.validation.isUrl = function(url) {
+  if (!url || typeof url !== 'string') return false;
   try {
     new URL(url);
     return true;
@@ -485,6 +538,7 @@ Utils.validation.isUrl = function(url) {
  * @returns {boolean} True if valid phone
  */
 Utils.validation.isPhone = function(phone) {
+  if (!phone || typeof phone !== 'string') return false;
   const pattern = /^[\+]?[1-9][\d]{0,15}$/;
   return pattern.test(phone.replace(/[\s\-\(\)]/g, ''));
 };
@@ -495,7 +549,7 @@ Utils.validation.isPhone = function(phone) {
  * @returns {boolean} True if empty
  */
 Utils.validation.isEmpty = function(str) {
-  return !str || str.trim().length === 0;
+  return !str || typeof str !== 'string' || str.trim().length === 0;
 };
 
 /* ==========================================================================
@@ -509,6 +563,10 @@ Utils.validation.isEmpty = function(str) {
  * @returns {Object} Result and execution time
  */
 Utils.performance.measure = function(func, ...args) {
+  if (typeof func !== 'function') {
+    return { result: null, executionTime: 0 };
+  }
+  
   const start = performance.now();
   const result = func(...args);
   const end = performance.now();
@@ -526,11 +584,16 @@ Utils.performance.measure = function(func, ...args) {
  * @returns {PerformanceObserver|null} Observer instance
  */
 Utils.performance.observe = function(type, callback) {
-  if (!window.PerformanceObserver) return null;
+  if (!window.PerformanceObserver || typeof callback !== 'function') return null;
   
-  const observer = new PerformanceObserver(callback);
-  observer.observe({ entryTypes: [type] });
-  return observer;
+  try {
+    const observer = new PerformanceObserver(callback);
+    observer.observe({ entryTypes: [type] });
+    return observer;
+  } catch (error) {
+    console.warn('Performance observer error:', error);
+    return null;
+  }
 };
 
 /**
@@ -539,13 +602,17 @@ Utils.performance.observe = function(type, callback) {
 Utils.performance.logMetrics = function() {
   if (!window.performance) return;
   
-  const navigation = performance.getEntriesByType('navigation')[0];
-  if (navigation) {
-    console.group('Performance Metrics');
-    console.log('DOM Content Loaded:', `${navigation.domContentLoadedEventEnd - navigation.navigationStart}ms`);
-    console.log('Page Load Complete:', `${navigation.loadEventEnd - navigation.navigationStart}ms`);
-    console.log('First Paint:', `${navigation.responseStart - navigation.navigationStart}ms`);
-    console.groupEnd();
+  try {
+    const navigation = performance.getEntriesByType('navigation')[0];
+    if (navigation) {
+      console.group('Performance Metrics');
+      console.log('DOM Content Loaded:', `${Math.round(navigation.domContentLoadedEventEnd - navigation.navigationStart)}ms`);
+      console.log('Page Load Complete:', `${Math.round(navigation.loadEventEnd - navigation.navigationStart)}ms`);
+      console.log('First Paint:', `${Math.round(navigation.responseStart - navigation.navigationStart)}ms`);
+      console.groupEnd();
+    }
+  } catch (error) {
+    console.warn('Performance metrics error:', error);
   }
 };
 

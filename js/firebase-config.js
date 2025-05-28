@@ -1,10 +1,10 @@
 /**
- * FIREBASE-CONFIG.JS - Firebase Configuration and Database Operations (FIXED VERSION)
+ * FIREBASE-CONFIG.JS - Firebase Configuration with Conditional Service Loading
  * Portfolio Website - Black & White Minimalistic Theme
- * FIXES: Removes env-config dependency, eliminates race conditions, ensures proper initialization
+ * FEATURES: Only initializes Firebase services that are actually loaded
  */
 
-// Firebase configuration - hardcoded for reliability (no env-config dependency)
+// Firebase configuration - hardcoded for reliability
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCBUX2wKjdwYSw61T5_xGONXj34j5C5q2I",
   authDomain: "mesog-portfolio.firebaseapp.com",
@@ -15,24 +15,55 @@ const FIREBASE_CONFIG = {
   measurementId: "G-WYZYKX4RJL"
 };
 
-// Firebase services
+// Firebase services (conditionally initialized)
 let app = null;
 let db = null;
 let auth = null;
 let storage = null;
 
-// Firebase state management (simplified)
+// Firebase state management
 const FirebaseService = {
   isInitialized: false,
   isInitializing: false,
   initializationError: null,
   isOnline: navigator.onLine,
   user: null,
-  listeners: {}
+  listeners: {},
+  availableServices: {
+    auth: false,
+    firestore: false,
+    storage: false
+  }
 };
 
 /**
- * Initialize Firebase services
+ * Check which Firebase services are available
+ */
+function detectAvailableServices() {
+  if (typeof firebase === 'undefined') {
+    console.warn('Firebase SDK not loaded');
+    return false;
+  }
+  
+  const services = {
+    auth: typeof firebase.auth !== 'undefined',
+    firestore: typeof firebase.firestore !== 'undefined',
+    storage: typeof firebase.storage !== 'undefined'
+  };
+  
+  FirebaseService.availableServices = services;
+  
+  console.log('Available Firebase services:', {
+    auth: services.auth ? '✓' : '✗',
+    firestore: services.firestore ? '✓' : '✗',
+    storage: services.storage ? '✓' : '✗'
+  });
+  
+  return true;
+}
+
+/**
+ * Initialize Firebase services (CONDITIONAL VERSION)
  */
 async function initializeFirebase() {
   // Prevent multiple simultaneous initialization attempts
@@ -45,28 +76,23 @@ async function initializeFirebase() {
   try {
     console.log('Initializing Firebase...');
     
-    // Check if Firebase SDK is loaded
-    if (typeof firebase === 'undefined') {
+    // Check what services are available
+    if (!detectAvailableServices()) {
       throw new Error('Firebase SDK not loaded');
     }
     
-    // Initialize Firebase app
+    // Initialize Firebase app (always required)
     if (!firebase.apps.length) {
       app = firebase.initializeApp(FIREBASE_CONFIG);
     } else {
       app = firebase.app();
     }
+    console.log('Firebase app initialized');
     
-    // Initialize services
-    db = firebase.firestore();
-    auth = firebase.auth();
-    storage = firebase.storage();
-    
-    // Configure Firestore settings
-    await configureFirestore();
-    
-    // Set up authentication listener
-    setupAuthListener();
+    // Initialize services conditionally
+    await initializeFirestore();
+    await initializeAuth();
+    await initializeStorage();
     
     // Set up connectivity monitoring
     setupConnectivityMonitoring();
@@ -75,7 +101,8 @@ async function initializeFirebase() {
     FirebaseService.isInitializing = false;
     FirebaseService.initializationError = null;
     
-    console.log('Firebase initialized successfully');
+    console.log('Firebase initialization complete');
+    logInitializationSummary();
     
     // Notify any waiting components
     notifyInitializationComplete();
@@ -91,33 +118,80 @@ async function initializeFirebase() {
 }
 
 /**
- * Configure Firestore settings
+ * Initialize Firestore (if available)
  */
-async function configureFirestore() {
-  if (!db) return;
+async function initializeFirestore() {
+  if (!FirebaseService.availableServices.firestore) {
+    console.log('Firestore not loaded - skipping');
+    return;
+  }
   
   try {
+    db = firebase.firestore();
+    
+    // Configure settings BEFORE any other operations
+    db.settings({
+      cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
+    });
+    console.log('Firestore settings configured');
+    
     // Enable offline persistence
-    await db.enablePersistence({ synchronizeTabs: true });
+    await db.enablePersistence({ 
+      synchronizeTabs: true 
+    });
     console.log('Firestore offline persistence enabled');
+    
   } catch (error) {
     if (error.code === 'failed-precondition') {
       console.warn('Firestore persistence failed: Multiple tabs open');
     } else if (error.code === 'unimplemented') {
       console.warn('Firestore persistence not supported in this browser');
     } else {
-      console.warn('Firestore persistence error:', error);
+      console.warn('Firestore initialization error:', error);
     }
+    // Don't throw - continue with online-only mode
   }
-  
-  // Configure settings
-  db.settings({
-    cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
-  });
 }
 
 /**
- * Set up authentication state listener
+ * Initialize Authentication (if available)
+ */
+async function initializeAuth() {
+  if (!FirebaseService.availableServices.auth) {
+    console.log('Auth not loaded - skipping');
+    return;
+  }
+  
+  try {
+    auth = firebase.auth();
+    setupAuthListener();
+    console.log('Auth service initialized');
+  } catch (error) {
+    console.error('Auth initialization error:', error);
+    // Don't throw - app can work without auth on public pages
+  }
+}
+
+/**
+ * Initialize Storage (if available)
+ */
+async function initializeStorage() {
+  if (!FirebaseService.availableServices.storage) {
+    console.log('Storage not loaded - skipping');
+    return;
+  }
+  
+  try {
+    storage = firebase.storage();
+    console.log('Storage service initialized');
+  } catch (error) {
+    console.error('Storage initialization error:', error);
+    // Don't throw - app can work without storage
+  }
+}
+
+/**
+ * Set up authentication state listener (if auth is available)
  */
 function setupAuthListener() {
   if (!auth) return;
@@ -152,12 +226,34 @@ function setupConnectivityMonitoring() {
 }
 
 /**
+ * Log initialization summary
+ */
+function logInitializationSummary() {
+  const summary = {
+    'Firebase App': '✓',
+    'Firestore': db ? '✓' : '✗',
+    'Authentication': auth ? '✓' : '✗',
+    'Storage': storage ? '✓' : '✗',
+    'Online': FirebaseService.isOnline ? '✓' : '✗'
+  };
+  
+  console.group('🔥 Firebase Services Summary');
+  Object.entries(summary).forEach(([service, status]) => {
+    console.log(`${service}: ${status}`);
+  });
+  console.groupEnd();
+}
+
+/**
  * Notify components that Firebase is ready
  */
 function notifyInitializationComplete() {
   // Dispatch custom event
   window.dispatchEvent(new CustomEvent('firebaseReady', {
-    detail: { success: true }
+    detail: { 
+      success: true,
+      services: FirebaseService.availableServices
+    }
   }));
 }
 
@@ -167,7 +263,9 @@ function notifyInitializationComplete() {
 function notifyAuthListeners(user) {
   Object.values(FirebaseService.listeners).forEach(callback => {
     try {
-      callback(user);
+      if (typeof callback === 'function') {
+        callback(user);
+      }
     } catch (error) {
       console.error('Error in auth listener:', error);
     }
@@ -208,29 +306,37 @@ const RateLimiter = {
  * Generate client fingerprint for rate limiting
  */
 function getClientFingerprint() {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  ctx.textBaseline = 'top';
-  ctx.font = '14px Arial';
-  ctx.fillText('Browser fingerprint', 2, 2);
-  
-  return btoa(
-    navigator.userAgent +
-    screen.width + screen.height +
-    new Date().getTimezoneOffset() +
-    canvas.toDataURL()
-  ).substr(0, 16);
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillText('Browser fingerprint', 2, 2);
+    
+    return btoa(
+      (navigator.userAgent || '') +
+      (screen.width || 0) + (screen.height || 0) +
+      new Date().getTimezoneOffset() +
+      canvas.toDataURL()
+    ).substr(0, 16);
+  } catch (error) {
+    // Fallback fingerprint
+    return btoa(
+      (navigator.userAgent || 'unknown') + 
+      Date.now().toString()
+    ).substr(0, 16);
+  }
 }
 
 /* ==========================================================================
-   AUTHENTICATION METHODS
+   AUTHENTICATION METHODS (Conditional)
    ========================================================================== */
 
 /**
- * Sign in with email and password (with rate limiting)
+ * Sign in with email and password (requires auth service)
  */
 async function signInWithEmail(email, password) {
-  if (!auth) throw new Error('Firebase Auth not initialized');
+  if (!auth) throw new Error('Authentication service not available');
   
   const clientId = getClientFingerprint();
   
@@ -250,10 +356,10 @@ async function signInWithEmail(email, password) {
 }
 
 /**
- * Sign out current user
+ * Sign out current user (requires auth service)
  */
 async function signOut() {
-  if (!auth) throw new Error('Firebase Auth not initialized');
+  if (!auth) throw new Error('Authentication service not available');
   
   try {
     const userEmail = auth.currentUser?.email;
@@ -271,7 +377,7 @@ async function signOut() {
  * Check if user is authenticated
  */
 function isAuthenticated() {
-  return FirebaseService.user !== null;
+  return FirebaseService.user !== null && auth !== null;
 }
 
 /**
@@ -282,7 +388,7 @@ function getCurrentUser() {
 }
 
 /* ==========================================================================
-   FIRESTORE DATABASE METHODS
+   FIRESTORE DATABASE METHODS (Conditional)
    ========================================================================== */
 
 /**
@@ -321,7 +427,8 @@ async function getProjects() {
  * Get project by ID
  */
 async function getProject(projectId) {
-  if (!db) throw new Error('Firestore not initialized');
+  if (!db) throw new Error('Firestore not available');
+  if (!projectId) throw new Error('Project ID is required');
   
   try {
     const doc = await db.collection('projects').doc(projectId).get();
@@ -343,11 +450,12 @@ async function getProject(projectId) {
 }
 
 /**
- * Add new project to Firestore
+ * Add new project to Firestore (requires auth)
  */
 async function addProject(projectData) {
-  if (!db) throw new Error('Firestore not initialized');
+  if (!db) throw new Error('Firestore not available');
   if (!isAuthenticated()) throw new Error('User not authenticated');
+  if (!projectData) throw new Error('Project data is required');
   
   try {
     const docRef = await db.collection('projects').add({
@@ -365,11 +473,13 @@ async function addProject(projectData) {
 }
 
 /**
- * Update existing project
+ * Update existing project (requires auth)
  */
 async function updateProject(projectId, updates) {
-  if (!db) throw new Error('Firestore not initialized');
+  if (!db) throw new Error('Firestore not available');
   if (!isAuthenticated()) throw new Error('User not authenticated');
+  if (!projectId) throw new Error('Project ID is required');
+  if (!updates) throw new Error('Updates are required');
   
   try {
     await db.collection('projects').doc(projectId).update({
@@ -386,11 +496,12 @@ async function updateProject(projectId, updates) {
 }
 
 /**
- * Delete project
+ * Delete project (requires auth)
  */
 async function deleteProject(projectId) {
-  if (!db) throw new Error('Firestore not initialized');
+  if (!db) throw new Error('Firestore not available');
   if (!isAuthenticated()) throw new Error('User not authenticated');
+  if (!projectId) throw new Error('Project ID is required');
   
   try {
     await db.collection('projects').doc(projectId).delete();
@@ -403,22 +514,18 @@ async function deleteProject(projectId) {
 }
 
 /**
- * Get featured projects
+ * Get featured projects (client-side filtering)
  */
 async function getFeaturedProjects() {
   if (!db) return [];
   
   try {
-    const snapshot = await db.collection('projects')
-      .where('featured', '==', true)
-      .where('status', 'in', ['published', 'completed'])
-      .orderBy('createdAt', 'desc')
-      .limit(3)
-      .get();
+    // Get all projects (no compound index needed)
+    const snapshot = await db.collection('projects').get();
     
-    const projects = [];
+    const allProjects = [];
     snapshot.forEach((doc) => {
-      projects.push({
+      allProjects.push({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate(),
@@ -426,7 +533,22 @@ async function getFeaturedProjects() {
       });
     });
     
-    return projects;
+    // Client-side filtering (no indexes required)
+    const featuredProjects = allProjects
+      .filter(project => {
+        const isFeatured = project.featured === true;
+        const validStatuses = ['published', 'completed'];
+        const hasValidStatus = !project.status || validStatuses.includes(project.status);
+        return isFeatured && hasValidStatus;
+      })
+      .sort((a, b) => {
+        const dateA = a.createdAt || new Date(0);
+        const dateB = b.createdAt || new Date(0);
+        return dateB - dateA;
+      })
+      .slice(0, 3);
+    
+    return featuredProjects;
   } catch (error) {
     console.error('Error fetching featured projects:', error);
     return [];
@@ -434,10 +556,10 @@ async function getFeaturedProjects() {
 }
 
 /**
- * Get contacts from Firestore
+ * Get contacts from Firestore (requires auth)
  */
 async function getContacts() {
-  if (!db) throw new Error('Firestore not initialized');
+  if (!db) throw new Error('Firestore not available');
   if (!isAuthenticated()) throw new Error('User not authenticated');
   
   try {
@@ -465,7 +587,8 @@ async function getContacts() {
  * Add contact message
  */
 async function addContact(contactData) {
-  if (!db) throw new Error('Firestore not initialized');
+  if (!db) throw new Error('Firestore not available');
+  if (!contactData) throw new Error('Contact data is required');
   
   // Rate limiting for contact form
   const clientId = getClientFingerprint();
@@ -478,7 +601,7 @@ async function addContact(contactData) {
       ...contactData,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       read: false,
-      userAgent: navigator.userAgent,
+      userAgent: navigator.userAgent || 'Unknown',
       referrer: document.referrer || 'direct'
     });
     
@@ -491,11 +614,13 @@ async function addContact(contactData) {
 }
 
 /**
- * Update contact (mark as read, etc.)
+ * Update contact (requires auth)
  */
 async function updateContact(contactId, updates) {
-  if (!db) throw new Error('Firestore not initialized');
+  if (!db) throw new Error('Firestore not available');
   if (!isAuthenticated()) throw new Error('User not authenticated');
+  if (!contactId) throw new Error('Contact ID is required');
+  if (!updates) throw new Error('Updates are required');
   
   try {
     await db.collection('contacts').doc(contactId).update({
@@ -512,11 +637,12 @@ async function updateContact(contactId, updates) {
 }
 
 /**
- * Delete contact
+ * Delete contact (requires auth)
  */
 async function deleteContact(contactId) {
-  if (!db) throw new Error('Firestore not initialized');
+  if (!db) throw new Error('Firestore not available');
   if (!isAuthenticated()) throw new Error('User not authenticated');
+  if (!contactId) throw new Error('Contact ID is required');
   
   try {
     await db.collection('contacts').doc(contactId).delete();
@@ -529,22 +655,24 @@ async function deleteContact(contactId) {
 }
 
 /* ==========================================================================
-   FIREBASE STORAGE METHODS
+   FIREBASE STORAGE METHODS (Conditional)
    ========================================================================== */
 
 /**
- * Upload image to Firebase Storage
+ * Upload image to Firebase Storage (requires storage and auth)
  */
 async function uploadImage(file, path, progressCallback) {
-  if (!storage) throw new Error('Firebase Storage not initialized');
+  if (!storage) throw new Error('Storage service not available');
   if (!isAuthenticated()) throw new Error('User not authenticated');
+  if (!file) throw new Error('File is required');
+  if (!path) throw new Error('Path is required');
   
   try {
     const storageRef = storage.ref().child(path);
     const uploadTask = storageRef.put(file);
     
     // Monitor upload progress
-    if (progressCallback) {
+    if (progressCallback && typeof progressCallback === 'function') {
       uploadTask.on('state_changed', 
         (snapshot) => {
           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -571,11 +699,12 @@ async function uploadImage(file, path, progressCallback) {
 }
 
 /**
- * Delete image from Firebase Storage
+ * Delete image from Firebase Storage (requires storage and auth)
  */
 async function deleteImage(url) {
-  if (!storage) throw new Error('Firebase Storage not initialized');
+  if (!storage) throw new Error('Storage service not available');
   if (!isAuthenticated()) throw new Error('User not authenticated');
+  if (!url) throw new Error('Image URL is required');
   
   try {
     const imageRef = storage.refFromURL(url);
@@ -589,22 +718,22 @@ async function deleteImage(url) {
 }
 
 /* ==========================================================================
-   ANALYTICS AND METRICS
+   ANALYTICS AND METRICS (Conditional)
    ========================================================================== */
 
 /**
  * Track page view
  */
 async function trackPageView(page) {
-  if (!db) return;
+  if (!db || !page) return;
   
   try {
     await db.collection('analytics').add({
       type: 'page_view',
       page: page,
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      userAgent: navigator.userAgent,
-      referrer: document.referrer
+      userAgent: navigator.userAgent || 'Unknown',
+      referrer: document.referrer || 'direct'
     });
   } catch (error) {
     console.warn('Analytics tracking failed:', error);
@@ -615,7 +744,7 @@ async function trackPageView(page) {
  * Track project view
  */
 async function trackProjectView(projectId) {
-  if (!db) return;
+  if (!db || !projectId) return;
   
   try {
     await db.collection('analytics').add({
@@ -632,6 +761,28 @@ async function trackProjectView(projectId) {
   } catch (error) {
     console.warn('Project view tracking failed:', error);
   }
+}
+
+/* ==========================================================================
+   SERVICE AVAILABILITY HELPERS
+   ========================================================================== */
+
+/**
+ * Check if specific service is available
+ */
+function isServiceAvailable(service) {
+  return FirebaseService.availableServices[service] === true;
+}
+
+/**
+ * Get list of missing services
+ */
+function getMissingServices() {
+  const missing = [];
+  Object.entries(FirebaseService.availableServices).forEach(([service, available]) => {
+    if (!available) missing.push(service);
+  });
+  return missing;
 }
 
 /* ==========================================================================
@@ -654,7 +805,12 @@ window.FirebaseService = {
   isOnline: () => FirebaseService.isOnline,
   getInitializationError: () => FirebaseService.initializationError,
   
-  // Authentication
+  // Service availability
+  isServiceAvailable,
+  getMissingServices,
+  getAvailableServices: () => FirebaseService.availableServices,
+  
+  // Authentication (conditional)
   signIn: signInWithEmail,
   signOut,
   isAuthenticated,
@@ -674,7 +830,7 @@ window.FirebaseService = {
   updateContact,
   deleteContact,
   
-  // Storage
+  // Storage (conditional)
   uploadImage,
   deleteImage,
   
