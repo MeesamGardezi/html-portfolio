@@ -1,7 +1,7 @@
 /**
- * FIREBASE-CONFIG.JS - Firebase Configuration with Conditional Service Loading
+ * FIREBASE-CONFIG.JS - Firebase Configuration with Improved Initialization (FIXED VERSION)
  * Portfolio Website - Black & White Minimalistic Theme
- * FEATURES: Only initializes Firebase services that are actually loaded
+ * FIXES: Better initialization timing and event handling
  */
 
 // Firebase configuration - hardcoded for reliability
@@ -29,6 +29,7 @@ const FirebaseService = {
   isOnline: navigator.onLine,
   user: null,
   listeners: {},
+  initializationPromise: null,
   availableServices: {
     auth: false,
     firestore: false,
@@ -63,18 +64,32 @@ function detectAvailableServices() {
 }
 
 /**
- * Initialize Firebase services (CONDITIONAL VERSION)
+ * Initialize Firebase services (IMPROVED VERSION)
  */
 async function initializeFirebase() {
-  // Prevent multiple simultaneous initialization attempts
-  if (FirebaseService.isInitialized || FirebaseService.isInitializing) {
-    return FirebaseService.isInitialized;
+  // Return existing promise if already initializing
+  if (FirebaseService.initializationPromise) {
+    return FirebaseService.initializationPromise;
   }
   
-  FirebaseService.isInitializing = true;
+  // Return immediately if already initialized
+  if (FirebaseService.isInitialized) {
+    return Promise.resolve(true);
+  }
   
+  // Create initialization promise
+  FirebaseService.initializationPromise = performFirebaseInitialization();
+  
+  return FirebaseService.initializationPromise;
+}
+
+/**
+ * Perform the actual Firebase initialization
+ */
+async function performFirebaseInitialization() {
   try {
-    console.log('Initializing Firebase...');
+    FirebaseService.isInitializing = true;
+    console.log('Starting Firebase initialization...');
     
     // Check what services are available
     if (!detectAvailableServices()) {
@@ -104,8 +119,10 @@ async function initializeFirebase() {
     console.log('Firebase initialization complete');
     logInitializationSummary();
     
-    // Notify any waiting components
-    notifyInitializationComplete();
+    // Notify any waiting components with delay to ensure listeners are ready
+    setTimeout(() => {
+      notifyInitializationComplete();
+    }, 100);
     
     return true;
     
@@ -113,6 +130,13 @@ async function initializeFirebase() {
     console.error('Firebase initialization failed:', error);
     FirebaseService.isInitializing = false;
     FirebaseService.initializationError = error;
+    FirebaseService.initializationPromise = null; // Reset promise on error
+    
+    // Still notify to prevent infinite waiting
+    setTimeout(() => {
+      notifyInitializationComplete(false, error);
+    }, 100);
+    
     return false;
   }
 }
@@ -245,16 +269,29 @@ function logInitializationSummary() {
 }
 
 /**
- * Notify components that Firebase is ready
+ * Notify components that Firebase is ready (IMPROVED VERSION)
  */
-function notifyInitializationComplete() {
+function notifyInitializationComplete(success = true, error = null) {
+  console.log('Notifying Firebase initialization complete:', success);
+  
   // Dispatch custom event
-  window.dispatchEvent(new CustomEvent('firebaseReady', {
-    detail: { 
-      success: true,
-      services: FirebaseService.availableServices
-    }
-  }));
+  const eventDetail = { 
+    success,
+    error,
+    services: FirebaseService.availableServices,
+    isInitialized: FirebaseService.isInitialized
+  };
+  
+  // Multiple event dispatches to ensure delivery
+  setTimeout(() => {
+    window.dispatchEvent(new CustomEvent('firebaseReady', { detail: eventDetail }));
+    window.dispatchEvent(new CustomEvent('firebase-ready', { detail: eventDetail }));
+    window.dispatchEvent(new CustomEvent('firebase:ready', { detail: eventDetail }));
+  }, 0);
+  
+  // Also set a flag that can be polled
+  window.firebaseReady = success;
+  window.firebaseError = error;
 }
 
 /**
@@ -584,10 +621,10 @@ async function getContacts() {
 }
 
 /**
- * Add contact message
+ * Add contact message (FIXED VERSION)
  */
 async function addContact(contactData) {
-  if (!db) throw new Error('Firestore not available');
+  if (!db) throw new Error('Contact service is temporarily unavailable. Please try again later or email directly.');
   if (!contactData) throw new Error('Contact data is required');
   
   // Rate limiting for contact form
@@ -609,6 +646,12 @@ async function addContact(contactData) {
     return docRef.id;
   } catch (error) {
     console.error('Error adding contact:', error);
+    
+    // Provide more specific error messages
+    if (error.code === 'permission-denied') {
+      throw new Error('Contact service is temporarily unavailable. Please try again later or email directly.');
+    }
+    
     throw error;
   }
 }
@@ -786,16 +829,35 @@ function getMissingServices() {
 }
 
 /* ==========================================================================
-   INITIALIZATION
+   INITIALIZATION - IMPROVED VERSION
    ========================================================================== */
 
-// Initialize Firebase when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-  // Small delay to ensure Firebase SDK is loaded
-  setTimeout(() => {
-    initializeFirebase();
-  }, 100);
-});
+// Initialize Firebase when DOM is ready or immediately if already ready
+function startFirebaseInitialization() {
+  console.log('Starting Firebase initialization...');
+  
+  // Check if Firebase SDK is loaded
+  if (typeof firebase === 'undefined') {
+    console.log('Firebase SDK not loaded yet, retrying in 500ms...');
+    setTimeout(startFirebaseInitialization, 500);
+    return;
+  }
+  
+  // Start initialization
+  initializeFirebase().then(success => {
+    console.log('Firebase initialization completed:', success);
+  }).catch(error => {
+    console.error('Firebase initialization failed:', error);
+  });
+}
+
+// Start initialization when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startFirebaseInitialization);
+} else {
+  // DOM already loaded
+  setTimeout(startFirebaseInitialization, 100);
+}
 
 // Export Firebase service object for global access
 window.FirebaseService = {

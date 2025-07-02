@@ -470,58 +470,85 @@
         // Global state for initialization tracking
         let isHomePageInitialized = false;
         let firebaseReadyListenerAdded = false;
+        let initializationAttempts = 0;
+        const MAX_INIT_ATTEMPTS = 5;
 
         /**
          * Initialize home page when both DOM and Firebase are ready
          */
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, checking Firebase state...');
+            console.log('DOM loaded, initializing home page...');
+            
+            // Initialize immediately if Firebase is ready, otherwise wait
+            waitForFirebaseAndInitialize();
+        });
+
+        /**
+         * Wait for Firebase to be ready and initialize home page
+         */
+        function waitForFirebaseAndInitialize() {
+            initializationAttempts++;
             
             // Check if Firebase is already ready
             if (window.FirebaseService && window.FirebaseService.isInitialized()) {
                 console.log('Firebase already initialized, starting home page...');
                 initializeHomePage();
-            } else {
-                console.log('Firebase not ready, waiting for initialization...');
-                waitForFirebase();
+                return;
             }
-        });
-
-        /**
-         * Wait for Firebase to be ready
-         */
-        function waitForFirebase() {
-            // Add listener only once
+            
+            // Check if Firebase SDK is loaded
+            if (typeof firebase === 'undefined') {
+                if (initializationAttempts < MAX_INIT_ATTEMPTS) {
+                    console.log(`Firebase SDK not loaded yet, attempt ${initializationAttempts}/${MAX_INIT_ATTEMPTS}`);
+                    setTimeout(waitForFirebaseAndInitialize, 1000);
+                } else {
+                    console.warn('Firebase SDK failed to load, initializing without Firebase features');
+                    initializeHomePage();
+                }
+                return;
+            }
+            
+            // Add Firebase ready listener if not already added
             if (!firebaseReadyListenerAdded) {
                 firebaseReadyListenerAdded = true;
                 
-                window.addEventListener('firebaseReady', function(event) {
-                    console.log('Firebase ready event received, initializing home page...');
+                // Listen for multiple event types to ensure we catch the ready event
+                const events = ['firebaseReady', 'firebase-ready', 'firebase:ready'];
+                events.forEach(eventName => {
+                    window.addEventListener(eventName, function(event) {
+                        console.log(`Firebase ready event received (${eventName}), initializing home page...`);
+                        if (!isHomePageInitialized) {
+                            initializeHomePage();
+                        }
+                    });
+                });
+                
+                // Also poll for Firebase ready state
+                const pollForFirebase = setInterval(() => {
+                    if (window.FirebaseService && window.FirebaseService.isInitialized()) {
+                        console.log('Firebase ready (polling), initializing home page...');
+                        clearInterval(pollForFirebase);
+                        if (!isHomePageInitialized) {
+                            initializeHomePage();
+                        }
+                    }
+                }, 500);
+                
+                // Stop polling after 10 seconds
+                setTimeout(() => {
+                    clearInterval(pollForFirebase);
                     if (!isHomePageInitialized) {
+                        console.warn('Firebase initialization timeout, initializing home page without Firebase features');
                         initializeHomePage();
                     }
-                });
+                }, 10000);
             }
             
-            // Also check periodically in case event was missed
-            const checkFirebase = setInterval(() => {
-                if (window.FirebaseService && window.FirebaseService.isInitialized()) {
-                    console.log('Firebase ready (periodic check), initializing home page...');
-                    clearInterval(checkFirebase);
-                    if (!isHomePageInitialized) {
-                        initializeHomePage();
-                    }
-                }
-            }, 500);
-            
-            // Stop checking after 10 seconds
-            setTimeout(() => {
-                clearInterval(checkFirebase);
-                if (!isHomePageInitialized) {
-                    console.warn('Firebase initialization timeout, initializing home page without Firebase features');
-                    initializeHomePage();
-                }
-            }, 10000);
+            // Retry if Firebase service exists but isn't initialized yet
+            if (window.FirebaseService && !window.FirebaseService.isInitialized() && initializationAttempts < MAX_INIT_ATTEMPTS) {
+                console.log(`Firebase service exists but not initialized, retrying... (${initializationAttempts}/${MAX_INIT_ATTEMPTS})`);
+                setTimeout(waitForFirebaseAndInitialize, 1000);
+            }
         }
 
         /**
@@ -536,11 +563,11 @@
             console.log('Initializing home page...');
             isHomePageInitialized = true;
             
-            // Load featured projects (with Firebase check)
-            loadFeaturedProjects();
-            
-            // Initialize contact form
+            // Initialize contact form first
             initializeHomeContactForm();
+            
+            // Load featured projects with retry mechanism
+            loadFeaturedProjectsWithRetry();
             
             // Track page view
             trackPageView('home');
@@ -555,59 +582,30 @@
         }
 
         /**
-         * Load featured projects with client-side filtering (NO INDEX REQUIRED)
+         * Load featured projects with automatic retry mechanism (FIXED VERSION)
          */
-        async function loadFeaturedProjects() {
+        async function loadFeaturedProjectsWithRetry(attempt = 1, maxAttempts = 3) {
             const grid = document.getElementById('featuredProjectsGrid');
             const loading = document.getElementById('projectsLoading');
             
             try {
+                console.log(`Loading featured projects, attempt ${attempt}/${maxAttempts}...`);
+                
                 // Check if Firebase is available
                 if (!window.FirebaseService || !window.FirebaseService.isInitialized()) {
-                    console.log('Firebase not available, showing placeholder projects...');
-                    showPlaceholderProjects(grid, loading);
-                    return;
+                    throw new Error('Firebase not available');
                 }
                 
-                console.log('Loading featured projects from Firebase...');
+                if (!window.FirebaseService.isServiceAvailable('firestore')) {
+                    throw new Error('Firestore service not available');
+                }
                 
-                // Get ALL projects first (no compound query = no index needed)
-                const snapshot = await firebase.firestore()
-                    .collection('projects')
-                    .get();
+                console.log('Firebase ready, fetching featured projects...');
                 
-                const allProjects = [];
-                snapshot.forEach((doc) => {
-                    allProjects.push({
-                        id: doc.id,
-                        ...doc.data(),
-                        createdAt: doc.data().createdAt?.toDate()
-                    });
-                });
+                // Get featured projects using the Firebase service
+                const featuredProjects = await window.FirebaseService.getFeaturedProjects();
                 
-                console.log(`Retrieved ${allProjects.length} projects from Firebase`);
-                
-                // CLIENT-SIDE FILTERING (no indexes needed)
-                const featuredProjects = allProjects
-                    .filter(project => {
-                        // Filter for featured projects
-                        const isFeatured = project.featured === true;
-                        
-                        // Filter for published/completed status
-                        const validStatuses = ['published', 'completed'];
-                        const hasValidStatus = !project.status || validStatuses.includes(project.status);
-                        
-                        return isFeatured && hasValidStatus;
-                    })
-                    .sort((a, b) => {
-                        // Sort by creation date (newest first)
-                        const dateA = a.createdAt || new Date(0);
-                        const dateB = b.createdAt || new Date(0);
-                        return dateB - dateA;
-                    })
-                    .slice(0, 3); // Take only first 3
-                
-                console.log(`Found ${featuredProjects.length} featured projects`);
+                console.log(`Retrieved ${featuredProjects.length} featured projects`);
                 
                 // Hide loading state
                 if (loading) {
@@ -618,6 +616,7 @@
                 if (featuredProjects.length === 0) {
                     grid.innerHTML = `
                         <div class="no-featured-projects">
+                            <h3>Featured Projects</h3>
                             <p>Featured projects will appear here once added from the admin panel.</p>
                             <a href="admin.html" class="btn btn-outline">Go to Admin Panel</a>
                         </div>
@@ -626,48 +625,46 @@
                     grid.innerHTML = featuredProjects.map(project => createFeaturedProjectCard(project)).join('');
                     
                     // Update apps count if available
-                    const appsCount = document.getElementById('appsCount');
-                    if (appsCount) {
-                        const totalPublished = allProjects.filter(p => 
-                            !p.status || ['published', 'completed'].includes(p.status)
-                        ).length;
-                        appsCount.textContent = `${totalPublished}+`;
-                    }
+                    updateAppsCount(featuredProjects.length);
                 }
                 
-            } catch (error) {
-                console.error('Error loading featured projects:', error);
+                console.log('Featured projects loaded successfully');
                 
-                // Hide loading and show error
+            } catch (error) {
+                console.error(`Error loading featured projects (attempt ${attempt}):`, error);
+                
+                // Hide loading state
                 if (loading) {
                     loading.style.display = 'none';
                 }
                 
-                grid.innerHTML = `
-                    <div class="project-error">
-                        <h3>Unable to load projects</h3>
-                        <p>Please check your connection and try again.</p>
-                        <button onclick="loadFeaturedProjects()" class="btn btn-outline">Retry</button>
-                    </div>
-                `;
+                if (attempt < maxAttempts) {
+                    // Retry after delay
+                    const retryDelay = attempt * 2000; // Increasing delay: 2s, 4s, 6s
+                    console.log(`Retrying in ${retryDelay}ms...`);
+                    
+                    grid.innerHTML = `
+                        <div class="project-loading-retry">
+                            <h3>Loading Projects...</h3>
+                            <p>Connecting to database, attempt ${attempt}/${maxAttempts}</p>
+                            <div class="loading-spinner"></div>
+                        </div>
+                    `;
+                    
+                    setTimeout(() => {
+                        loadFeaturedProjectsWithRetry(attempt + 1, maxAttempts);
+                    }, retryDelay);
+                } else {
+                    // Max attempts reached, show error with manual retry
+                    grid.innerHTML = `
+                        <div class="project-error">
+                            <h3>Unable to load projects</h3>
+                            <p>Please check your connection and try again.</p>
+                            <button onclick="loadFeaturedProjectsWithRetry(1, 3)" class="btn btn-outline">Retry</button>
+                        </div>
+                    `;
+                }
             }
-        }
-
-        /**
-         * Show placeholder projects when Firebase is not available
-         */
-        function showPlaceholderProjects(grid, loading) {
-            if (loading) {
-                loading.style.display = 'none';
-            }
-            
-            grid.innerHTML = `
-                <div class="no-featured-projects">
-                    <h3>Projects Loading...</h3>
-                    <p>Please wait while we connect to the database.</p>
-                    <button onclick="loadFeaturedProjects()" class="btn btn-outline">Retry</button>
-                </div>
-            `;
         }
 
         /**
@@ -700,93 +697,191 @@
         }
 
         /**
-         * Initialize home contact form
+         * Update apps count in about section
+         */
+        function updateAppsCount(featuredCount) {
+            // Try to get total count from all projects, fallback to featured count
+            if (window.FirebaseService && window.FirebaseService.isInitialized()) {
+                window.FirebaseService.getProjects().then(allProjects => {
+                    const appsCount = document.getElementById('appsCount');
+                    if (appsCount && allProjects) {
+                        const totalPublished = allProjects.filter(p => 
+                            !p.status || ['published', 'completed'].includes(p.status)
+                        ).length;
+                        appsCount.textContent = `${totalPublished}+`;
+                    }
+                }).catch(error => {
+                    console.warn('Could not update total apps count:', error);
+                    // Fallback to featured count
+                    const appsCount = document.getElementById('appsCount');
+                    if (appsCount) {
+                        appsCount.textContent = `${featuredCount}+`;
+                    }
+                });
+            }
+        }
+
+        /**
+         * Initialize home contact form (FIXED VERSION)
          */
         function initializeHomeContactForm() {
             const form = document.getElementById('homeContactForm');
-            if (!form) return;
+            if (!form) {
+                console.warn('Home contact form not found');
+                return;
+            }
             
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
+            console.log('Initializing home contact form...');
+            
+            // Remove any existing listeners to prevent duplicates
+            const newForm = form.cloneNode(true);
+            form.parentNode.replaceChild(newForm, form);
+            
+            // Add submit listener to the new form
+            newForm.addEventListener('submit', handleHomeContactSubmit);
+            
+            // Initialize real-time validation
+            initializeFormValidation(newForm);
+            
+            console.log('Home contact form initialized successfully');
+        }
+
+        /**
+         * Handle home contact form submission (FIXED VERSION)
+         */
+        async function handleHomeContactSubmit(e) {
+            e.preventDefault();
+            
+            console.log('Home contact form submitted');
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Validate form data
+            if (!validateContactForm(data)) {
+                return;
+            }
+            
+            const submitBtn = document.getElementById('homeSubmitBtn');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const btnSpinner = submitBtn.querySelector('.btn-spinner');
+            
+            try {
+                // Show loading state
+                btnText.textContent = 'Sending...';
+                btnSpinner.classList.remove('hidden');
+                submitBtn.disabled = true;
                 
-                const formData = new FormData(e.target);
-                const data = Object.fromEntries(formData.entries());
-                
-                if (!validateContactForm(data)) {
-                    return;
+                // Check if Firebase is available
+                if (!window.FirebaseService || !window.FirebaseService.isInitialized()) {
+                    throw new Error('Contact service is temporarily unavailable. Please try again later or email directly.');
                 }
                 
-                const submitBtn = document.getElementById('homeSubmitBtn');
-                const btnText = submitBtn.querySelector('.btn-text');
-                const btnSpinner = submitBtn.querySelector('.btn-spinner');
-                
-                try {
-                    btnText.textContent = 'Sending...';
-                    btnSpinner.classList.remove('hidden');
-                    submitBtn.disabled = true;
-                    
-                    // Check if Firebase is available
-                    if (!window.FirebaseService || !window.FirebaseService.isInitialized()) {
-                        throw new Error('Contact service is temporarily unavailable. Please try again later or email directly.');
-                    }
-                    
-                    await window.FirebaseService.addContact({
-                        name: data.name.trim(),
-                        email: data.email.trim().toLowerCase(),
-                        subject: data.subject.trim(),
-                        message: data.message.trim(),
-                        source: 'home_page'
-                    });
-                    
-                    showHomeNotification('Message sent successfully! I\'ll get back to you soon.', 'success');
-                    form.reset();
-                    clearFormErrors();
-                    announceToScreen('Message sent successfully');
-                    
-                } catch (error) {
-                    console.error('Contact form error:', error);
-                    const errorMessage = error.message.includes('Too many') 
-                        ? error.message 
-                        : error.message.includes('temporarily unavailable')
-                        ? error.message
-                        : 'Failed to send message. Please try again or email directly.';
-                    showHomeNotification(errorMessage, 'error');
-                } finally {
-                    btnText.textContent = 'Send Message';
-                    btnSpinner.classList.add('hidden');
-                    submitBtn.disabled = false;
+                if (!window.FirebaseService.isServiceAvailable('firestore')) {
+                    throw new Error('Contact service is temporarily unavailable. Please try again later or email directly.');
                 }
+                
+                console.log('Submitting contact form to Firebase...');
+                
+                // Submit to Firebase
+                await window.FirebaseService.addContact({
+                    name: data.name.trim(),
+                    email: data.email.trim().toLowerCase(),
+                    subject: data.subject.trim(),
+                    message: data.message.trim(),
+                    source: 'home_page'
+                });
+                
+                console.log('Contact form submitted successfully');
+                
+                showHomeNotification('Message sent successfully! I\'ll get back to you soon.', 'success');
+                e.target.reset();
+                clearFormErrors();
+                announceToScreen('Message sent successfully');
+                
+            } catch (error) {
+                console.error('Contact form error:', error);
+                
+                let errorMessage = 'Failed to send message. Please try again.';
+                
+                if (error.message.includes('Too many')) {
+                    errorMessage = error.message;
+                } else if (error.message.includes('temporarily unavailable')) {
+                    errorMessage = error.message;
+                } else if (error.message.includes('permission-denied')) {
+                    errorMessage = 'Contact service is temporarily unavailable. Please try again later or email directly.';
+                }
+                
+                showHomeNotification(errorMessage, 'error');
+                
+            } finally {
+                // Restore button state
+                btnText.textContent = 'Send Message';
+                btnSpinner.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        }
+
+        /**
+         * Initialize form validation for contact form
+         */
+        function initializeFormValidation(form) {
+            const fields = form.querySelectorAll('input, textarea');
+            
+            fields.forEach(field => {
+                // Clear errors on input
+                field.addEventListener('input', () => {
+                    clearFieldError(field);
+                });
+                
+                // Validate on blur
+                field.addEventListener('blur', () => {
+                    validateField(field);
+                });
             });
         }
 
         /**
-         * Validate contact form
+         * Validate contact form data
          */
         function validateContactForm(data) {
             let isValid = true;
             
             clearFormErrors();
             
+            // Name validation
             if (!data.name?.trim()) {
-                showFieldError('name', 'Name is required');
+                showFieldError('homeName', 'Name is required');
+                isValid = false;
+            } else if (data.name.trim().length < 2) {
+                showFieldError('homeName', 'Name must be at least 2 characters');
                 isValid = false;
             }
             
+            // Email validation
             if (!data.email?.trim()) {
-                showFieldError('email', 'Email is required');
+                showFieldError('homeEmail', 'Email is required');
                 isValid = false;
             } else if (!isValidEmail(data.email)) {
-                showFieldError('email', 'Please enter a valid email address');
+                showFieldError('homeEmail', 'Please enter a valid email address');
                 isValid = false;
             }
             
+            // Subject validation
             if (!data.subject?.trim()) {
-                showFieldError('subject', 'Subject is required');
+                showFieldError('homeSubject', 'Subject is required');
+                isValid = false;
+            } else if (data.subject.trim().length < 3) {
+                showFieldError('homeSubject', 'Subject must be at least 3 characters');
                 isValid = false;
             }
             
+            // Message validation
             if (!data.message?.trim()) {
-                showFieldError('message', 'Message is required');
+                showFieldError('homeMessage', 'Message is required');
+                isValid = false;
+            } else if (data.message.trim().length < 10) {
+                showFieldError('homeMessage', 'Message must be at least 10 characters');
                 isValid = false;
             }
             
@@ -794,25 +889,91 @@
         }
 
         /**
-         * Show field error
+         * Validate individual field
          */
-        function showFieldError(fieldName, message) {
-            const errorElement = document.getElementById(`${fieldName}-error`);
-            const inputElement = document.getElementById(`home${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}`);
+        function validateField(field) {
+            const value = field.value.trim();
+            const fieldName = field.name;
             
-            if (errorElement) {
-                errorElement.textContent = message;
-                errorElement.style.display = 'block';
-            }
+            clearFieldError(field);
             
-            if (inputElement) {
-                inputElement.setAttribute('aria-invalid', 'true');
-                inputElement.style.borderColor = '#ef4444';
+            switch (fieldName) {
+                case 'name':
+                    if (!value) {
+                        showFieldError(field.id, 'Name is required');
+                    } else if (value.length < 2) {
+                        showFieldError(field.id, 'Name must be at least 2 characters');
+                    }
+                    break;
+                    
+                case 'email':
+                    if (!value) {
+                        showFieldError(field.id, 'Email is required');
+                    } else if (!isValidEmail(value)) {
+                        showFieldError(field.id, 'Please enter a valid email address');
+                    }
+                    break;
+                    
+                case 'subject':
+                    if (!value) {
+                        showFieldError(field.id, 'Subject is required');
+                    } else if (value.length < 3) {
+                        showFieldError(field.id, 'Subject must be at least 3 characters');
+                    }
+                    break;
+                    
+                case 'message':
+                    if (!value) {
+                        showFieldError(field.id, 'Message is required');
+                    } else if (value.length < 10) {
+                        showFieldError(field.id, 'Message must be at least 10 characters');
+                    }
+                    break;
             }
         }
 
         /**
-         * Clear form errors
+         * Show field error
+         */
+        function showFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            if (!field) return;
+            
+            const errorId = fieldId.replace('home', '').toLowerCase() + '-error';
+            const errorElement = document.getElementById(errorId);
+            
+            // Style the field
+            field.style.borderColor = '#ef4444';
+            field.setAttribute('aria-invalid', 'true');
+            
+            // Show error message
+            if (errorElement) {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+            }
+        }
+
+        /**
+         * Clear field error
+         */
+        function clearFieldError(field) {
+            if (!field) return;
+            
+            field.style.borderColor = '';
+            field.removeAttribute('aria-invalid');
+            
+            const fieldId = field.id;
+            const errorId = fieldId.replace('home', '').toLowerCase() + '-error';
+            const errorElement = document.getElementById(errorId);
+            
+            if (errorElement) {
+                errorElement.textContent = '';
+                errorElement.style.display = 'none';
+            }
+        }
+
+        /**
+         * Clear all form errors
          */
         function clearFormErrors() {
             const errorElements = document.querySelectorAll('.error-message');
@@ -824,8 +985,8 @@
             });
             
             inputElements.forEach(element => {
-                element.removeAttribute('aria-invalid');
                 element.style.borderColor = '';
+                element.removeAttribute('aria-invalid');
             });
         }
 
@@ -841,10 +1002,20 @@
          * Show home notification
          */
         function showHomeNotification(message, type = 'info') {
+            // Remove any existing notifications
+            const existingNotifications = document.querySelectorAll('.home-notification');
+            existingNotifications.forEach(notification => notification.remove());
+            
             const notification = document.createElement('div');
             notification.className = `home-notification home-notification-${type}`;
             notification.setAttribute('role', 'alert');
-            notification.textContent = message;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <span class="notification-message">${message}</span>
+                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+                </div>
+            `;
+            
             notification.style.cssText = `
                 position: fixed;
                 top: 90px;
@@ -858,6 +1029,7 @@
                 transform: translateX(400px);
                 transition: transform 0.3s ease;
                 max-width: 350px;
+                word-wrap: break-word;
             `;
             
             document.body.appendChild(notification);
@@ -870,7 +1042,7 @@
                         notification.remove();
                     }
                 }, 300);
-            }, 5000);
+            }, 6000);
         }
 
         /**
@@ -892,30 +1064,13 @@
         function setupErrorBoundary() {
             window.addEventListener('error', (event) => {
                 console.error('Global error:', event.error);
-                showErrorBoundary();
+                // Don't show error boundary for minor errors
             });
 
             window.addEventListener('unhandledrejection', (event) => {
                 console.error('Unhandled promise rejection:', event.reason);
-                showErrorBoundary();
+                // Don't show error boundary for minor rejections
             });
-
-            const retryBtn = document.getElementById('error-retry');
-            if (retryBtn) {
-                retryBtn.addEventListener('click', () => {
-                    window.location.reload();
-                });
-            }
-        }
-
-        /**
-         * Show error boundary
-         */
-        function showErrorBoundary() {
-            const errorBoundary = document.getElementById('error-boundary');
-            if (errorBoundary) {
-                errorBoundary.classList.remove('hidden');
-            }
         }
 
         /**
@@ -936,9 +1091,11 @@
             }
         }
 
-        // Make loadFeaturedProjects available globally for retry buttons
-        window.loadFeaturedProjects = loadFeaturedProjects;
+        // Make functions available globally for retry buttons
+        window.loadFeaturedProjectsWithRetry = loadFeaturedProjectsWithRetry;
+        window.initializeHomePage = initializeHomePage;
     </script>
+    
     
     <!-- Additional Styles for new features -->
     <style>
