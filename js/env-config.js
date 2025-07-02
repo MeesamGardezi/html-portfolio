@@ -15,9 +15,9 @@ const ENV_CONFIG = {
   APP_URL: window.location.origin || 'https://yourportfolio.com',
   
   // Contact Configuration  
-  CONTACT_EMAIL: 'your.email@example.com',
-  CONTACT_PHONE: '+1 (234) 567-890',
-  CONTACT_LOCATION: 'Your City, Country',
+  CONTACT_EMAIL: 'muhammadmeesamgardezi@gmail.com',
+  CONTACT_PHONE: '+92 3253964839',
+  CONTACT_LOCATION: 'Pakistan',
   
   // Personal Information
   DEVELOPER_NAME: 'Meesam Gardezi',
