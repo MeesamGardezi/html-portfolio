@@ -12,7 +12,7 @@ const ENV_CONFIG = {
   // Application Configuration
   APP_NAME: 'Flutter Developer Portfolio',
   APP_VERSION: '1.0.0',
-  APP_URL: window.location.origin || 'https://yourportfolio.com',
+  APP_URL: window.location.origin || 'https://meesamgardezi.buildersolve.com',
   
   // Contact Configuration  
   CONTACT_EMAIL: 'muhammadmeesamgardezi@gmail.com',
@@ -25,10 +25,9 @@ const ENV_CONFIG = {
   DEVELOPER_BIO: 'Passionate Flutter developer creating beautiful mobile applications',
   
   // Social Media Links
-  GITHUB_URL: 'https://github.com/yourusername',
-  LINKEDIN_URL: 'https://linkedin.com/in/yourusername', 
-  TWITTER_URL: 'https://twitter.com/yourusername',
-  PORTFOLIO_URL: window.location.origin || 'https://yourportfolio.com',
+  GITHUB_URL: 'https://github.com/MeesamGardezi',
+  LINKEDIN_URL: 'https://linkedin.com/in/meesamgardezi', 
+  PORTFOLIO_URL: window.location.origin || 'https://meesamgardezi.buildersolve.com',
   
   // Feature Flags
   ENABLE_ANALYTICS: true,

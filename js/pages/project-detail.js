@@ -2,6 +2,7 @@
  * PROJECT-DETAIL.JS - Project Detail Page Functionality
  * Portfolio Website - Black & White Minimalistic Theme
  * Features: Gallery, lightbox, sharing, related projects
+ * Fixed: All race conditions, memory leaks, and mobile image sizing
  */
 
 // Project detail page state
@@ -11,7 +12,17 @@ const ProjectDetail = {
   images: [],
   isLoading: false,
   allProjects: [],
-  relatedProjects: []
+  relatedProjects: [],
+  eventListeners: new Map(), // Track listeners for cleanup
+  domElements: null, // Cached DOM elements
+  isInitialized: false
+};
+
+// Configuration
+const CONFIG = {
+  mobileAspectThreshold: 0.8, // Images with aspect ratio < 0.8 are considered mobile
+  maxRelatedProjects: 3,
+  lightboxFocusTrap: null
 };
 
 /**
@@ -19,6 +30,15 @@ const ProjectDetail = {
  */
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM loaded, initializing project detail page...');
+  
+  // Prevent multiple initializations
+  if (ProjectDetail.isInitialized) {
+    console.warn('Project detail already initialized');
+    return;
+  }
+  
+  // Cache DOM elements first
+  cacheDOMElements();
   
   // Check if Firebase is already ready
   if (window.FirebaseService && window.FirebaseService.isInitialized()) {
@@ -31,27 +51,109 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Wait for Firebase to be ready
+ * Cache frequently used DOM elements
+ */
+function cacheDOMElements() {
+  ProjectDetail.domElements = {
+    // Main elements
+    loadingScreen: document.getElementById('loading-screen'),
+    errorScreen: document.getElementById('project-error'),
+    errorMessage: document.getElementById('error-message'),
+    notificationContainer: document.getElementById('notification-container'),
+    
+    // Project info
+    projectTitle: document.getElementById('project-title'),
+    projectSubtitle: document.getElementById('project-subtitle'),
+    projectCategory: document.getElementById('project-category'),
+    projectStatus: document.getElementById('project-status'),
+    projectDate: document.getElementById('project-date'),
+    projectTechnologies: document.getElementById('project-technologies'),
+    projectLinks: document.getElementById('project-links'),
+    
+    // Gallery
+    projectGallery: document.getElementById('project-gallery'),
+    mainImage: document.getElementById('main-image'),
+    prevBtn: document.getElementById('prev-btn'),
+    nextBtn: document.getElementById('next-btn'),
+    imageCounter: document.getElementById('image-counter'),
+    galleryThumbnails: document.getElementById('gallery-thumbnails'),
+    
+    // Content
+    projectOverview: document.getElementById('project-overview'),
+    featuresList: document.getElementById('features-list'),
+    featuresBlock: document.getElementById('features-block'),
+    developmentJourney: document.getElementById('development-journey'),
+    journeyBlock: document.getElementById('journey-block'),
+    challengesList: document.getElementById('challenges-list'),
+    challengesBlock: document.getElementById('challenges-block'),
+    
+    // Sidebar
+    devTime: document.getElementById('dev-time'),
+    platform: document.getElementById('platform'),
+    teamSize: document.getElementById('team-size'),
+    downloads: document.getElementById('downloads'),
+    viewCount: document.getElementById('view-count'),
+    techDetails: document.getElementById('tech-details'),
+    
+    // Share buttons
+    twitterShare: document.getElementById('twitter-share'),
+    linkedinShare: document.getElementById('linkedin-share'),
+    copyLink: document.getElementById('copy-link'),
+    
+    // Lightbox
+    lightboxModal: document.getElementById('lightbox-modal'),
+    lightboxImage: document.getElementById('lightbox-image'),
+    lightboxTitle: document.getElementById('lightbox-title'),
+    lightboxDescription: document.getElementById('lightbox-description'),
+    lightboxClose: document.getElementById('lightbox-close'),
+    lightboxPrev: document.getElementById('lightbox-prev'),
+    lightboxNext: document.getElementById('lightbox-next'),
+    focusTrapStart: document.querySelector('.focus-trap-start'),
+    focusTrapEnd: document.querySelector('.focus-trap-end'),
+    
+    // Related projects
+    relatedProjects: document.getElementById('related-projects'),
+    relatedGrid: document.querySelector('.related-grid')
+  };
+  
+  console.log('DOM elements cached successfully');
+}
+
+/**
+ * Wait for Firebase to be ready with timeout and cleanup
  */
 function waitForFirebase() {
-  // Listen for Firebase ready event
-  window.addEventListener('firebaseReady', function(event) {
+  let timeoutId;
+  let intervalId;
+  
+  // Firebase ready event listener
+  const firebaseReadyHandler = function(event) {
     console.log('Firebase ready event received, initializing project detail...');
+    cleanup();
     initializeProjectDetail();
-  });
+  };
+  
+  const cleanup = () => {
+    clearTimeout(timeoutId);
+    clearInterval(intervalId);
+    window.removeEventListener('firebaseReady', firebaseReadyHandler);
+  };
+  
+  // Listen for Firebase ready event
+  window.addEventListener('firebaseReady', firebaseReadyHandler);
   
   // Also check periodically in case event was missed
-  const checkFirebase = setInterval(() => {
+  intervalId = setInterval(() => {
     if (window.FirebaseService && window.FirebaseService.isInitialized()) {
       console.log('Firebase ready (periodic check), initializing project detail...');
-      clearInterval(checkFirebase);
+      cleanup();
       initializeProjectDetail();
     }
   }, 500);
   
   // Stop checking after 10 seconds
-  setTimeout(() => {
-    clearInterval(checkFirebase);
+  timeoutId = setTimeout(() => {
+    cleanup();
     console.warn('Firebase initialization timeout, initializing without Firebase');
     initializeProjectDetail();
   }, 10000);
@@ -61,6 +163,11 @@ function waitForFirebase() {
  * Initialize project detail page
  */
 function initializeProjectDetail() {
+  if (ProjectDetail.isInitialized) {
+    console.warn('Project detail already initialized');
+    return;
+  }
+  
   console.log('Initializing project detail page...');
   
   // Get project ID from URL
@@ -74,17 +181,17 @@ function initializeProjectDetail() {
   
   console.log('Loading project with ID:', projectId);
   
+  // Mark as initialized
+  ProjectDetail.isInitialized = true;
+  
+  // Initialize all functionality
+  initializeGallery();
+  initializeLightbox();
+  initializeSharing();
+  initializeKeyboardNavigation();
+  
   // Load project details
   loadProjectDetail(projectId);
-  
-  // Initialize gallery functionality
-  initializeGallery();
-  
-  // Initialize lightbox
-  initializeLightbox();
-  
-  // Initialize sharing functionality
-  initializeSharing();
   
   console.log('Project detail page initialization complete');
 }
@@ -129,7 +236,7 @@ async function loadProjectDetail(projectId) {
     
     // Store project data
     ProjectDetail.currentProject = project;
-    ProjectDetail.images = project.images || [];
+    ProjectDetail.images = Array.isArray(project.images) ? project.images : [];
     ProjectDetail.currentImageIndex = 0;
     
     // Populate project details
@@ -147,13 +254,15 @@ async function loadProjectDetail(projectId) {
     console.error('Error loading project:', error);
     hideLoadingScreen();
     
+    let errorMessage = 'Failed to load project details. Please try again later.';
+    
     if (error.message === 'Project not found') {
-      showProjectError('The project you\'re looking for doesn\'t exist or has been removed.');
+      errorMessage = 'The project you\'re looking for doesn\'t exist or has been removed.';
     } else if (error.message.includes('Firebase')) {
-      showProjectError('Unable to connect to the database. Please try again later.');
-    } else {
-      showProjectError('Failed to load project details. Please try again later.');
+      errorMessage = 'Unable to connect to the database. Please try again later.';
     }
+    
+    showProjectError(errorMessage);
   } finally {
     ProjectDetail.isLoading = false;
   }
@@ -165,10 +274,15 @@ async function loadProjectDetail(projectId) {
 function populateProjectDetail(project) {
   console.log('Populating project details...');
   
-  // Update page title
+  const { domElements } = ProjectDetail;
+  
+  // Update page title and meta
   const pageTitle = `${project.title} - Flutter Developer Portfolio`;
   document.title = pageTitle;
-  document.getElementById('page-title').textContent = pageTitle;
+  const pageTitleElement = document.getElementById('page-title');
+  if (pageTitleElement) {
+    pageTitleElement.textContent = pageTitle;
+  }
   
   // Update meta description
   const metaDescription = document.querySelector('meta[name="description"]');
@@ -177,15 +291,23 @@ function populateProjectDetail(project) {
   }
   
   // Basic project information
-  document.getElementById('projectTitle').textContent = project.title || 'Untitled Project';
-  document.getElementById('projectSubtitle').textContent = project.description || 'No description available';
-  document.getElementById('projectCategory').textContent = project.category || 'Uncategorized';
-  document.getElementById('projectStatus').textContent = formatStatus(project.status || 'published');
-  document.getElementById('projectDate').textContent = formatDate(project.createdAt);
-  
-  // Update status class
-  const statusElement = document.getElementById('projectStatus');
-  statusElement.className = `meta-value project-status ${(project.status || 'published').replace('-', '')}`;
+  if (domElements.projectTitle) {
+    domElements.projectTitle.textContent = project.title || 'Untitled Project';
+  }
+  if (domElements.projectSubtitle) {
+    domElements.projectSubtitle.textContent = project.description || 'No description available';
+  }
+  if (domElements.projectCategory) {
+    domElements.projectCategory.textContent = project.category || 'Uncategorized';
+  }
+  if (domElements.projectStatus) {
+    const status = project.status || 'published';
+    domElements.projectStatus.textContent = formatStatus(status);
+    domElements.projectStatus.className = `meta-value project-status ${status.replace(/[-\s]/g, '').toLowerCase()}`;
+  }
+  if (domElements.projectDate) {
+    domElements.projectDate.textContent = formatDate(project.createdAt);
+  }
   
   // Technologies
   populateTechnologies(project.technologies || []);
@@ -212,15 +334,17 @@ function populateProjectDetail(project) {
  * Populate technologies section
  */
 function populateTechnologies(technologies) {
-  const container = document.getElementById('projectTechnologies');
+  const { domElements } = ProjectDetail;
+  
+  if (!domElements.projectTechnologies) return;
   
   if (technologies.length === 0) {
-    container.innerHTML = '<span class="tech-tag">No technologies specified</span>';
+    domElements.projectTechnologies.innerHTML = '<span class="tech-tag" role="listitem">No technologies specified</span>';
     return;
   }
   
-  container.innerHTML = technologies.map(tech => 
-    `<span class="tech-tag">${tech}</span>`
+  domElements.projectTechnologies.innerHTML = technologies.map(tech => 
+    `<span class="tech-tag" role="listitem">${escapeHtml(tech)}</span>`
   ).join('');
 }
 
@@ -228,13 +352,16 @@ function populateTechnologies(technologies) {
  * Populate project links
  */
 function populateProjectLinks(links) {
-  const container = document.getElementById('projectLinks');
+  const { domElements } = ProjectDetail;
+  
+  if (!domElements.projectLinks) return;
+  
   const linkButtons = [];
   
   if (links.github) {
     linkButtons.push(`
-      <a href="${links.github}" target="_blank" rel="noopener" class="project-btn github-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <a href="${escapeHtml(links.github)}" target="_blank" rel="noopener" class="project-btn github-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
         </svg>
         GitHub
@@ -244,8 +371,8 @@ function populateProjectLinks(links) {
   
   if (links.demo) {
     linkButtons.push(`
-      <a href="${links.demo}" target="_blank" rel="noopener" class="project-btn demo-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <a href="${escapeHtml(links.demo)}" target="_blank" rel="noopener" class="project-btn demo-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
           <polyline points="15,3 21,3 21,9"/>
           <line x1="10" y1="14" x2="21" y2="3"/>
@@ -257,8 +384,8 @@ function populateProjectLinks(links) {
   
   if (links.playStore) {
     linkButtons.push(`
-      <a href="${links.playStore}" target="_blank" rel="noopener" class="project-btn store-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <a href="${escapeHtml(links.playStore)}" target="_blank" rel="noopener" class="project-btn store-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.61 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.86 20.16,13.19L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z"/>
         </svg>
         Play Store
@@ -268,8 +395,8 @@ function populateProjectLinks(links) {
   
   if (links.appStore) {
     linkButtons.push(`
-      <a href="${links.appStore}" target="_blank" rel="noopener" class="project-btn store-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <a href="${escapeHtml(links.appStore)}" target="_blank" rel="noopener" class="project-btn store-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z"/>
         </svg>
         App Store
@@ -278,22 +405,25 @@ function populateProjectLinks(links) {
   }
   
   if (linkButtons.length === 0) {
-    container.innerHTML = '<p style="color: #666; font-style: italic;">No external links available</p>';
+    domElements.projectLinks.innerHTML = '<p style="color: #666; font-style: italic;">No external links available</p>';
   } else {
-    container.innerHTML = linkButtons.join('');
+    domElements.projectLinks.innerHTML = linkButtons.join('');
   }
 }
 
 /**
- * Setup image gallery
+ * Setup image gallery with mobile image detection
  */
 function setupGallery(images) {
+  const { domElements } = ProjectDetail;
+  
+  if (!domElements.projectGallery || !domElements.mainImage) return;
+  
   if (images.length === 0) {
     // Show placeholder
-    const gallery = document.getElementById('projectGallery');
-    gallery.innerHTML = `
+    domElements.projectGallery.innerHTML = `
       <div class="gallery-main">
-        <div style="aspect-ratio: 16/10; background: #f3f4f6; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+        <div class="gallery-placeholder" style="aspect-ratio: 16/10; background: #f3f4f6; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
           <p style="color: #666;">No images available</p>
         </div>
       </div>
@@ -304,35 +434,118 @@ function setupGallery(images) {
   ProjectDetail.images = images;
   ProjectDetail.currentImageIndex = 0;
   
-  // Set main image
-  const mainImage = document.getElementById('mainImage');
-  mainImage.src = images[0];
-  mainImage.alt = `${ProjectDetail.currentProject.title} - Image 1`;
+  // Set main image with loading and error handling
+  setupMainImage(images[0], 0);
   
   // Setup thumbnails
-  const thumbnailsContainer = document.getElementById('galleryThumbnails');
-  if (images.length > 1) {
-    thumbnailsContainer.innerHTML = images.map((image, index) => 
-      `<img src="${image}" alt="Screenshot ${index + 1}" class="thumbnail ${index === 0 ? 'active' : ''}" onclick="changeImage(${index})">`
-    ).join('');
-  } else {
-    thumbnailsContainer.style.display = 'none';
+  setupThumbnails(images);
+  
+  // Update UI
+  updateImageCounter();
+  updateGalleryButtons();
+}
+
+/**
+ * Setup main image with mobile detection and proper sizing
+ */
+function setupMainImage(imageUrl, index) {
+  const { domElements } = ProjectDetail;
+  
+  if (!domElements.mainImage || !imageUrl) return;
+  
+  // Clear previous classes
+  domElements.mainImage.className = 'main-image';
+  
+  // Create new image to detect dimensions
+  const img = new Image();
+  
+  img.onload = function() {
+    const aspectRatio = this.naturalWidth / this.naturalHeight;
+    const isMobileImage = aspectRatio < CONFIG.mobileAspectThreshold;
+    
+    console.log(`Image ${index + 1}: ${this.naturalWidth}x${this.naturalHeight}, aspect: ${aspectRatio.toFixed(2)}, mobile: ${isMobileImage}`);
+    
+    // Apply appropriate sizing
+    if (isMobileImage) {
+      domElements.mainImage.classList.add('mobile-image');
+      domElements.mainImage.style.objectFit = 'contain';
+    } else {
+      domElements.mainImage.classList.add('desktop-image');
+      domElements.mainImage.style.objectFit = 'cover';
+    }
+    
+    // Set the image
+    domElements.mainImage.src = imageUrl;
+    domElements.mainImage.alt = `${ProjectDetail.currentProject?.title || 'Project'} - Screenshot ${index + 1}`;
+  };
+  
+  img.onerror = function() {
+    console.error(`Failed to load image: ${imageUrl}`);
+    domElements.mainImage.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23666">Failed to load image</text></svg>';
+    domElements.mainImage.alt = 'Failed to load image';
+  };
+  
+  // Start loading
+  img.src = imageUrl;
+}
+
+/**
+ * Setup gallery thumbnails
+ */
+function setupThumbnails(images) {
+  const { domElements } = ProjectDetail;
+  
+  if (!domElements.galleryThumbnails) return;
+  
+  if (images.length <= 1) {
+    domElements.galleryThumbnails.style.display = 'none';
+    return;
   }
   
-  // Update image counter
-  updateImageCounter();
+  domElements.galleryThumbnails.style.display = 'flex';
+  domElements.galleryThumbnails.innerHTML = images.map((image, index) => 
+    `<img src="${escapeHtml(image)}" 
+         alt="Screenshot ${index + 1}" 
+         class="thumbnail ${index === 0 ? 'active' : ''}" 
+         data-index="${index}"
+         tabindex="0"
+         role="button"
+         aria-label="View screenshot ${index + 1}">`
+  ).join('');
   
-  // Update navigation buttons
-  updateGalleryButtons();
+  // Add click and keyboard handlers to thumbnails
+  const thumbnails = domElements.galleryThumbnails.querySelectorAll('.thumbnail');
+  thumbnails.forEach((thumbnail, index) => {
+    const clickHandler = () => changeImage(index);
+    const keyHandler = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        changeImage(index);
+      }
+    };
+    
+    thumbnail.addEventListener('click', clickHandler);
+    thumbnail.addEventListener('keydown', keyHandler);
+    
+    // Store handlers for cleanup
+    ProjectDetail.eventListeners.set(`thumbnail-${index}`, [
+      { element: thumbnail, event: 'click', handler: clickHandler },
+      { element: thumbnail, event: 'keydown', handler: keyHandler }
+    ]);
+  });
 }
 
 /**
  * Populate project content sections
  */
 function populateProjectContent(project) {
+  const { domElements } = ProjectDetail;
+  
   // Overview
   const overview = project.longDescription || project.description || 'No detailed description available for this project.';
-  document.getElementById('projectOverview').innerHTML = formatText(overview);
+  if (domElements.projectOverview) {
+    domElements.projectOverview.innerHTML = formatText(overview);
+  }
   
   // Features
   populateFeatures(project.features || []);
@@ -348,95 +561,118 @@ function populateProjectContent(project) {
  * Populate features section
  */
 function populateFeatures(features) {
-  const container = document.getElementById('featuresList');
-  const block = document.getElementById('featuresBlock');
+  const { domElements } = ProjectDetail;
+  
+  if (!domElements.featuresList || !domElements.featuresBlock) return;
   
   if (features.length === 0) {
-    block.style.display = 'none';
+    domElements.featuresBlock.style.display = 'none';
     return;
   }
   
-  container.innerHTML = features.map(feature => 
-    `<li class="feature-item">${feature}</li>`
+  domElements.featuresList.innerHTML = features.map(feature => 
+    `<li class="feature-item" role="listitem">${escapeHtml(feature)}</li>`
   ).join('');
   
-  block.style.display = 'block';
+  domElements.featuresBlock.style.display = 'block';
 }
 
 /**
  * Populate development journey section
  */
 function populateDevelopmentJourney(journey) {
-  const container = document.getElementById('developmentJourney');
-  const block = document.getElementById('journeyBlock');
+  const { domElements } = ProjectDetail;
+  
+  if (!domElements.developmentJourney || !domElements.journeyBlock) return;
   
   if (!journey) {
-    block.style.display = 'none';
+    domElements.journeyBlock.style.display = 'none';
     return;
   }
   
-  container.innerHTML = formatText(journey);
-  block.style.display = 'block';
+  domElements.developmentJourney.innerHTML = formatText(journey);
+  domElements.journeyBlock.style.display = 'block';
 }
 
 /**
  * Populate challenges section
  */
 function populateChallenges(challenges) {
-  const container = document.getElementById('challengesList');
-  const block = document.getElementById('challengesBlock');
+  const { domElements } = ProjectDetail;
+  
+  if (!domElements.challengesList || !domElements.challengesBlock) return;
   
   if (challenges.length === 0) {
-    block.style.display = 'none';
+    domElements.challengesBlock.style.display = 'none';
     return;
   }
   
-  container.innerHTML = challenges.map(challenge => `
-    <div class="challenge-item">
-      <h4 class="challenge-title">${challenge.title || 'Challenge'}</h4>
-      <p class="challenge-description">${challenge.description || challenge}</p>
-    </div>
-  `).join('');
+  domElements.challengesList.innerHTML = challenges.map(challenge => {
+    const title = typeof challenge === 'object' ? challenge.title : 'Challenge';
+    const description = typeof challenge === 'object' ? challenge.description : challenge;
+    
+    return `
+      <div class="challenge-item">
+        <h4 class="challenge-title">${escapeHtml(title)}</h4>
+        <p class="challenge-description">${escapeHtml(description)}</p>
+      </div>
+    `;
+  }).join('');
   
-  block.style.display = 'block';
+  domElements.challengesBlock.style.display = 'block';
 }
 
 /**
  * Populate project statistics
  */
 function populateProjectStats(project) {
-  document.getElementById('devTime').textContent = project.devTime || project.developmentTime || '-';
-  document.getElementById('platform').textContent = project.platform || 'Not specified';
-  document.getElementById('teamSize').textContent = project.teamSize || '1 developer';
-  document.getElementById('downloads').textContent = formatNumber(project.downloads) || '-';
-  document.getElementById('viewCount').textContent = formatNumber(project.viewCount) || '-';
+  const { domElements } = ProjectDetail;
+  
+  if (domElements.devTime) {
+    domElements.devTime.textContent = project.devTime || project.developmentTime || '-';
+  }
+  if (domElements.platform) {
+    domElements.platform.textContent = project.platform || 'Not specified';
+  }
+  if (domElements.teamSize) {
+    domElements.teamSize.textContent = project.teamSize || '1 developer';
+  }
+  if (domElements.downloads) {
+    domElements.downloads.textContent = formatNumber(project.downloads) || '-';
+  }
+  if (domElements.viewCount) {
+    domElements.viewCount.textContent = formatNumber(project.viewCount) || '-';
+  }
 }
 
 /**
  * Populate technical details
  */
 function populateTechnicalDetails(project) {
-  const container = document.getElementById('techDetails');
+  const { domElements } = ProjectDetail;
+  
+  if (!domElements.techDetails) return;
+  
   const details = [];
   
   if (project.technologies && project.technologies.length > 0) {
     details.push(...project.technologies.map(tech => 
-      `<div class="tech-detail-item">${tech}</div>`
+      `<div class="tech-detail-item" role="listitem">${escapeHtml(tech)}</div>`
     ));
   }
   
   if (project.database) {
-    details.push(`<div class="tech-detail-item">Database: ${project.database}</div>`);
+    details.push(`<div class="tech-detail-item" role="listitem">Database: ${escapeHtml(project.database)}</div>`);
   }
   
   if (project.architecture) {
-    details.push(`<div class="tech-detail-item">Architecture: ${project.architecture}</div>`);
+    details.push(`<div class="tech-detail-item" role="listitem">Architecture: ${escapeHtml(project.architecture)}</div>`);
   }
   
   if (details.length === 0) {
-    container.innerHTML = '<p style="color: #666; font-style: italic;">No technical details available</p>';
+    domElements.techDetails.innerHTML = '<p style="color: #666; font-style: italic;">No technical details available</p>';
   } else {
-    container.innerHTML = details.join('');
+    domElements.techDetails.innerHTML = details.join('');
   }
 }
 
@@ -445,52 +681,87 @@ function populateTechnicalDetails(project) {
    ========================================================================== */
 
 /**
- * Initialize gallery functionality
+ * Initialize gallery functionality with proper event handling
  */
 function initializeGallery() {
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
+  const { domElements } = ProjectDetail;
   
-  if (prevBtn) {
-    prevBtn.addEventListener('click', () => previousImage());
-  }
+  if (!domElements.prevBtn || !domElements.nextBtn || !domElements.mainImage) return;
   
-  if (nextBtn) {
-    nextBtn.addEventListener('click', () => nextImage());
-  }
+  // Gallery navigation handlers
+  const prevHandler = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    previousImage();
+  };
   
-  // Keyboard navigation
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft') {
-      previousImage();
-    } else if (e.key === 'ArrowRight') {
-      nextImage();
+  const nextHandler = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    nextImage();
+  };
+  
+  const imageClickHandler = (e) => {
+    e.preventDefault();
+    openLightbox(ProjectDetail.currentImageIndex);
+  };
+  
+  const imageKeyHandler = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openLightbox(ProjectDetail.currentImageIndex);
     }
-  });
+  };
+  
+  // Add event listeners
+  domElements.prevBtn.addEventListener('click', prevHandler);
+  domElements.nextBtn.addEventListener('click', nextHandler);
+  domElements.mainImage.addEventListener('click', imageClickHandler);
+  domElements.mainImage.addEventListener('keydown', imageKeyHandler);
+  
+  // Store for cleanup
+  ProjectDetail.eventListeners.set('gallery', [
+    { element: domElements.prevBtn, event: 'click', handler: prevHandler },
+    { element: domElements.nextBtn, event: 'click', handler: nextHandler },
+    { element: domElements.mainImage, event: 'click', handler: imageClickHandler },
+    { element: domElements.mainImage, event: 'keydown', handler: imageKeyHandler }
+  ]);
+  
+  console.log('Gallery functionality initialized');
 }
 
 /**
- * Change to specific image
+ * Change to specific image with bounds checking
  */
 function changeImage(index) {
-  if (index < 0 || index >= ProjectDetail.images.length) return;
+  if (!ProjectDetail.images || ProjectDetail.images.length === 0) {
+    console.warn('No images available');
+    return;
+  }
+  
+  if (index < 0 || index >= ProjectDetail.images.length) {
+    console.warn(`Invalid image index: ${index}`);
+    return;
+  }
+  
+  if (!ProjectDetail.currentProject) {
+    console.warn('No current project');
+    return;
+  }
   
   ProjectDetail.currentImageIndex = index;
   
   // Update main image
-  const mainImage = document.getElementById('mainImage');
-  mainImage.src = ProjectDetail.images[index];
-  mainImage.alt = `${ProjectDetail.currentProject.title} - Image ${index + 1}`;
+  setupMainImage(ProjectDetail.images[index], index);
   
   // Update thumbnails
-  const thumbnails = document.querySelectorAll('.thumbnail');
-  thumbnails.forEach((thumb, i) => {
-    thumb.classList.toggle('active', i === index);
-  });
+  updateThumbnails();
   
   // Update counter and buttons
   updateImageCounter();
   updateGalleryButtons();
+  
+  console.log(`Changed to image ${index + 1}/${ProjectDetail.images.length}`);
 }
 
 /**
@@ -514,12 +785,29 @@ function nextImage() {
 }
 
 /**
+ * Update thumbnail active states
+ */
+function updateThumbnails() {
+  const { domElements } = ProjectDetail;
+  
+  if (!domElements.galleryThumbnails) return;
+  
+  const thumbnails = domElements.galleryThumbnails.querySelectorAll('.thumbnail');
+  thumbnails.forEach((thumb, i) => {
+    thumb.classList.toggle('active', i === ProjectDetail.currentImageIndex);
+  });
+}
+
+/**
  * Update image counter
  */
 function updateImageCounter() {
-  const counter = document.getElementById('imageCounter');
-  if (counter) {
-    counter.textContent = `${ProjectDetail.currentImageIndex + 1} / ${ProjectDetail.images.length}`;
+  const { domElements } = ProjectDetail;
+  
+  if (domElements.imageCounter) {
+    const current = ProjectDetail.currentImageIndex + 1;
+    const total = ProjectDetail.images.length;
+    domElements.imageCounter.textContent = `${current} / ${total}`;
   }
 }
 
@@ -527,15 +815,16 @@ function updateImageCounter() {
  * Update gallery navigation buttons
  */
 function updateGalleryButtons() {
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
+  const { domElements } = ProjectDetail;
   
-  if (prevBtn) {
-    prevBtn.disabled = ProjectDetail.currentImageIndex === 0;
+  if (domElements.prevBtn) {
+    domElements.prevBtn.disabled = ProjectDetail.currentImageIndex === 0;
+    domElements.prevBtn.setAttribute('aria-disabled', ProjectDetail.currentImageIndex === 0);
   }
   
-  if (nextBtn) {
-    nextBtn.disabled = ProjectDetail.currentImageIndex === ProjectDetail.images.length - 1;
+  if (domElements.nextBtn) {
+    domElements.nextBtn.disabled = ProjectDetail.currentImageIndex === ProjectDetail.images.length - 1;
+    domElements.nextBtn.setAttribute('aria-disabled', ProjectDetail.currentImageIndex === ProjectDetail.images.length - 1);
   }
 }
 
@@ -544,81 +833,142 @@ function updateGalleryButtons() {
    ========================================================================== */
 
 /**
- * Initialize lightbox functionality
+ * Initialize lightbox functionality with focus management
  */
 function initializeLightbox() {
-  const lightboxModal = document.getElementById('lightboxModal');
-  const lightboxClose = lightboxModal.querySelector('.lightbox-close');
-  const mainImage = document.getElementById('mainImage');
+  const { domElements } = ProjectDetail;
   
-  // Open lightbox when main image is clicked
-  if (mainImage) {
-    mainImage.addEventListener('click', () => {
-      openLightbox(ProjectDetail.currentImageIndex);
-    });
-  }
+  if (!domElements.lightboxModal || !domElements.lightboxClose) return;
   
-  // Close lightbox
-  if (lightboxClose) {
-    lightboxClose.addEventListener('click', closeLightbox);
-  }
-  
-  if (lightboxModal) {
-    lightboxModal.addEventListener('click', (e) => {
-      if (e.target === lightboxModal) closeLightbox();
-    });
-  }
-  
-  // Lightbox navigation
-  const lightboxPrev = lightboxModal.querySelector('.lightbox-prev');
-  const lightboxNext = lightboxModal.querySelector('.lightbox-next');
-  
-  if (lightboxPrev) {
-    lightboxPrev.addEventListener('click', () => navigateLightbox(-1));
-  }
-  
-  if (lightboxNext) {
-    lightboxNext.addEventListener('click', () => navigateLightbox(1));
-  }
-  
-  // Keyboard navigation
-  document.addEventListener('keydown', (e) => {
-    if (lightboxModal.classList.contains('active')) {
-      if (e.key === 'Escape') closeLightbox();
-      if (e.key === 'ArrowLeft') navigateLightbox(-1);
-      if (e.key === 'ArrowRight') navigateLightbox(1);
+  // Lightbox event handlers
+  const closeHandler = () => closeLightbox();
+  const modalClickHandler = (e) => {
+    if (e.target === domElements.lightboxModal) {
+      closeLightbox();
     }
-  });
+  };
+  const prevHandler = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigateLightbox(-1);
+  };
+  const nextHandler = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigateLightbox(1);
+  };
+  
+  // Focus trap handlers
+  const focusTrapStartHandler = () => {
+    if (domElements.lightboxClose) {
+      domElements.lightboxClose.focus();
+    }
+  };
+  const focusTrapEndHandler = () => {
+    if (domElements.lightboxClose) {
+      domElements.lightboxClose.focus();
+    }
+  };
+  
+  // Add event listeners
+  domElements.lightboxClose.addEventListener('click', closeHandler);
+  domElements.lightboxModal.addEventListener('click', modalClickHandler);
+  
+  if (domElements.lightboxPrev) {
+    domElements.lightboxPrev.addEventListener('click', prevHandler);
+  }
+  if (domElements.lightboxNext) {
+    domElements.lightboxNext.addEventListener('click', nextHandler);
+  }
+  if (domElements.focusTrapStart) {
+    domElements.focusTrapStart.addEventListener('focus', focusTrapStartHandler);
+  }
+  if (domElements.focusTrapEnd) {
+    domElements.focusTrapEnd.addEventListener('focus', focusTrapEndHandler);
+  }
+  
+  // Store for cleanup
+  const lightboxListeners = [
+    { element: domElements.lightboxClose, event: 'click', handler: closeHandler },
+    { element: domElements.lightboxModal, event: 'click', handler: modalClickHandler }
+  ];
+  
+  if (domElements.lightboxPrev) {
+    lightboxListeners.push({ element: domElements.lightboxPrev, event: 'click', handler: prevHandler });
+  }
+  if (domElements.lightboxNext) {
+    lightboxListeners.push({ element: domElements.lightboxNext, event: 'click', handler: nextHandler });
+  }
+  if (domElements.focusTrapStart) {
+    lightboxListeners.push({ element: domElements.focusTrapStart, event: 'focus', handler: focusTrapStartHandler });
+  }
+  if (domElements.focusTrapEnd) {
+    lightboxListeners.push({ element: domElements.focusTrapEnd, event: 'focus', handler: focusTrapEndHandler });
+  }
+  
+  ProjectDetail.eventListeners.set('lightbox', lightboxListeners);
+  
+  console.log('Lightbox functionality initialized');
 }
 
 /**
- * Open lightbox
+ * Open lightbox with focus management
  */
 function openLightbox(index) {
-  const lightboxModal = document.getElementById('lightboxModal');
-  const lightboxImage = document.getElementById('lightboxImage');
-  const lightboxTitle = lightboxModal.querySelector('.lightbox-title');
+  const { domElements } = ProjectDetail;
   
-  if (ProjectDetail.images.length === 0) return;
+  if (!domElements.lightboxModal || !domElements.lightboxImage || ProjectDetail.images.length === 0) return;
   
-  lightboxImage.src = ProjectDetail.images[index];
-  lightboxImage.alt = `${ProjectDetail.currentProject.title} - Image ${index + 1}`;
+  // Store currently focused element
+  CONFIG.lightboxFocusTrap = document.activeElement;
   
-  if (lightboxTitle) {
-    lightboxTitle.textContent = `${ProjectDetail.currentProject.title} - Image ${index + 1}`;
+  // Set image
+  const imageUrl = ProjectDetail.images[index];
+  domElements.lightboxImage.src = imageUrl;
+  domElements.lightboxImage.alt = `${ProjectDetail.currentProject?.title || 'Project'} - Screenshot ${index + 1}`;
+  
+  // Set title and description
+  if (domElements.lightboxTitle) {
+    domElements.lightboxTitle.textContent = `${ProjectDetail.currentProject?.title || 'Project'} - Screenshot ${index + 1}`;
+  }
+  if (domElements.lightboxDescription) {
+    domElements.lightboxDescription.textContent = ProjectDetail.currentProject?.description || '';
   }
   
-  lightboxModal.classList.add('active');
+  // Show modal
+  domElements.lightboxModal.classList.add('active');
+  domElements.lightboxModal.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
+  
+  // Focus close button
+  setTimeout(() => {
+    if (domElements.lightboxClose) {
+      domElements.lightboxClose.focus();
+    }
+  }, 100);
+  
+  console.log(`Opened lightbox for image ${index + 1}`);
 }
 
 /**
- * Close lightbox
+ * Close lightbox and restore focus
  */
 function closeLightbox() {
-  const lightboxModal = document.getElementById('lightboxModal');
-  lightboxModal.classList.remove('active');
+  const { domElements } = ProjectDetail;
+  
+  if (!domElements.lightboxModal) return;
+  
+  domElements.lightboxModal.classList.remove('active');
+  domElements.lightboxModal.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
+  
+  // Restore focus
+  if (CONFIG.lightboxFocusTrap && typeof CONFIG.lightboxFocusTrap.focus === 'function') {
+    CONFIG.lightboxFocusTrap.focus();
+  }
+  CONFIG.lightboxFocusTrap = null;
+  
+  console.log('Lightbox closed');
 }
 
 /**
@@ -634,6 +984,67 @@ function navigateLightbox(direction) {
 }
 
 /* ==========================================================================
+   KEYBOARD NAVIGATION
+   ========================================================================== */
+
+/**
+ * Initialize keyboard navigation with proper scope handling
+ */
+function initializeKeyboardNavigation() {
+  const keyboardHandler = (e) => {
+    // Only handle if not in an input field
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+      return;
+    }
+    
+    const { domElements } = ProjectDetail;
+    const lightboxActive = domElements.lightboxModal && domElements.lightboxModal.classList.contains('active');
+    
+    switch (e.key) {
+      case 'Escape':
+        if (lightboxActive) {
+          e.preventDefault();
+          closeLightbox();
+        }
+        break;
+        
+      case 'ArrowLeft':
+        e.preventDefault();
+        if (lightboxActive) {
+          navigateLightbox(-1);
+        } else {
+          previousImage();
+        }
+        break;
+        
+      case 'ArrowRight':
+        e.preventDefault();
+        if (lightboxActive) {
+          navigateLightbox(1);
+        } else {
+          nextImage();
+        }
+        break;
+        
+      case 'Enter':
+      case ' ':
+        if (!lightboxActive && e.target === domElements.mainImage) {
+          e.preventDefault();
+          openLightbox(ProjectDetail.currentImageIndex);
+        }
+        break;
+    }
+  };
+  
+  document.addEventListener('keydown', keyboardHandler);
+  ProjectDetail.eventListeners.set('keyboard', [
+    { element: document, event: 'keydown', handler: keyboardHandler }
+  ]);
+  
+  console.log('Keyboard navigation initialized');
+}
+
+/* ==========================================================================
    SHARING FUNCTIONALITY
    ========================================================================== */
 
@@ -641,58 +1052,85 @@ function navigateLightbox(direction) {
  * Initialize sharing functionality
  */
 function initializeSharing() {
-  // Share buttons are handled via onclick attributes in HTML
+  const { domElements } = ProjectDetail;
+  
+  if (!domElements.twitterShare || !domElements.linkedinShare || !domElements.copyLink) return;
+  
+  const twitterHandler = () => shareProject('twitter');
+  const linkedinHandler = () => shareProject('linkedin');
+  const copyHandler = () => copyProjectUrl();
+  
+  domElements.twitterShare.addEventListener('click', twitterHandler);
+  domElements.linkedinShare.addEventListener('click', linkedinHandler);
+  domElements.copyLink.addEventListener('click', copyHandler);
+  
+  ProjectDetail.eventListeners.set('sharing', [
+    { element: domElements.twitterShare, event: 'click', handler: twitterHandler },
+    { element: domElements.linkedinShare, event: 'click', handler: linkedinHandler },
+    { element: domElements.copyLink, event: 'click', handler: copyHandler }
+  ]);
+  
   console.log('Sharing functionality initialized');
 }
 
 /**
- * Share project on social media
+ * Share project on social media with proper URL encoding
  */
 function shareProject(platform) {
   if (!ProjectDetail.currentProject) return;
   
-  const url = window.location.href;
-  const title = ProjectDetail.currentProject.title;
-  const description = ProjectDetail.currentProject.description;
-  const text = `Check out this amazing project: ${title}`;
+  const url = encodeURIComponent(window.location.href);
+  const title = encodeURIComponent(ProjectDetail.currentProject.title || 'Check out this project');
+  const description = encodeURIComponent(ProjectDetail.currentProject.description || '');
+  
+  let shareUrl = '';
   
   switch (platform) {
     case 'twitter':
-      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-      window.open(twitterUrl, '_blank', 'width=550,height=420');
+      const twitterText = encodeURIComponent(`Check out this amazing project: ${ProjectDetail.currentProject.title}`);
+      shareUrl = `https://twitter.com/intent/tweet?text=${twitterText}&url=${url}`;
       break;
       
     case 'linkedin':
-      const linkedinUrl = `https://linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
-      window.open(linkedinUrl, '_blank', 'width=550,height=420');
+      shareUrl = `https://linkedin.com/sharing/share-offsite/?url=${url}`;
       break;
       
     case 'facebook':
-      const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-      window.open(facebookUrl, '_blank', 'width=550,height=420');
+      shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
       break;
+      
+    default:
+      console.error('Unknown sharing platform:', platform);
+      return;
+  }
+  
+  if (shareUrl) {
+    window.open(shareUrl, '_blank', 'width=550,height=420,resizable=yes,scrollbars=yes');
   }
 }
 
 /**
- * Copy project URL to clipboard
+ * Copy project URL to clipboard with fallback
  */
-function copyProjectUrl() {
+async function copyProjectUrl() {
   const url = window.location.href;
   
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(() => {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(url);
       showNotification('Project URL copied to clipboard!', 'success');
-    }).catch(() => {
+    } else {
+      // Fallback for older browsers or non-HTTPS
       fallbackCopyToClipboard(url);
-    });
-  } else {
+    }
+  } catch (error) {
+    console.error('Failed to copy URL:', error);
     fallbackCopyToClipboard(url);
   }
 }
 
 /**
- * Fallback copy to clipboard
+ * Fallback copy to clipboard method
  */
 function fallbackCopyToClipboard(text) {
   const textArea = document.createElement('textarea');
@@ -700,18 +1138,26 @@ function fallbackCopyToClipboard(text) {
   textArea.style.position = 'fixed';
   textArea.style.left = '-999999px';
   textArea.style.top = '-999999px';
+  textArea.setAttribute('readonly', '');
+  textArea.setAttribute('aria-hidden', 'true');
+  
   document.body.appendChild(textArea);
   textArea.focus();
   textArea.select();
   
   try {
-    document.execCommand('copy');
-    showNotification('Project URL copied to clipboard!', 'success');
-  } catch (err) {
+    const successful = document.execCommand('copy');
+    if (successful) {
+      showNotification('Project URL copied to clipboard!', 'success');
+    } else {
+      throw new Error('Copy command failed');
+    }
+  } catch (error) {
+    console.error('Fallback copy failed:', error);
     showNotification('Failed to copy URL. Please copy manually from address bar.', 'error');
+  } finally {
+    document.body.removeChild(textArea);
   }
-  
-  textArea.remove();
 }
 
 /* ==========================================================================
@@ -719,99 +1165,136 @@ function fallbackCopyToClipboard(text) {
    ========================================================================== */
 
 /**
- * Load related projects
+ * Load related projects with better filtering
  */
 async function loadRelatedProjects(currentProject) {
+  const { domElements } = ProjectDetail;
+  
   try {
     console.log('Loading related projects...');
     
     if (!window.FirebaseService || !window.FirebaseService.isServiceAvailable('firestore')) {
       console.log('Firestore not available, skipping related projects');
+      hideRelatedProjects();
       return;
     }
     
-    // Get all projects (simple query, no indexes needed)
+    // Get all projects
     const allProjects = await window.FirebaseService.getProjects();
     
-    // Filter related projects (client-side)
-    const related = allProjects
-      .filter(project => {
-        // Exclude current project
-        if (project.id === currentProject.id) return false;
-        
-        // Only published/completed projects
-        const validStatuses = ['published', 'completed'];
-        if (project.status && !validStatuses.includes(project.status)) return false;
-        
-        // Check for same category or shared technologies
-        const sameCategory = project.category === currentProject.category;
-        const sharedTech = currentProject.technologies && project.technologies && 
-          currentProject.technologies.some(tech => project.technologies.includes(tech));
-        
-        return sameCategory || sharedTech;
-      })
-      .sort((a, b) => {
-        // Sort by relevance (same category first, then by date)
-        const aCategory = a.category === currentProject.category ? 1 : 0;
-        const bCategory = b.category === currentProject.category ? 1 : 0;
-        
-        if (aCategory !== bCategory) {
-          return bCategory - aCategory;
-        }
-        
-        // Then by date
-        const dateA = a.createdAt || new Date(0);
-        const dateB = b.createdAt || new Date(0);
-        return dateB - dateA;
-      })
-      .slice(0, 3); // Take only 3 related projects
+    if (!allProjects || allProjects.length === 0) {
+      console.log('No projects available for related section');
+      hideRelatedProjects();
+      return;
+    }
+    
+    // Filter and sort related projects
+    const related = getRelatedProjects(allProjects, currentProject);
     
     ProjectDetail.relatedProjects = related;
-    renderRelatedProjects(related);
+    
+    if (related.length > 0) {
+      renderRelatedProjects(related);
+    } else {
+      hideRelatedProjects();
+    }
     
   } catch (error) {
     console.error('Error loading related projects:', error);
-    // Hide related projects section on error
-    const relatedSection = document.getElementById('relatedProjects');
-    if (relatedSection) {
-      relatedSection.style.display = 'none';
-    }
+    hideRelatedProjects();
   }
+}
+
+/**
+ * Get related projects with improved logic
+ */
+function getRelatedProjects(allProjects, currentProject) {
+  const validStatuses = ['published', 'completed'];
+  
+  return allProjects
+    .filter(project => {
+      // Exclude current project
+      if (project.id === currentProject.id) return false;
+      
+      // Only published/completed projects
+      if (project.status && !validStatuses.includes(project.status)) return false;
+      
+      // Must have basic required fields
+      if (!project.title || !project.description) return false;
+      
+      return true;
+    })
+    .map(project => {
+      // Calculate relevance score
+      let score = 0;
+      
+      // Same category bonus
+      if (project.category === currentProject.category) {
+        score += 10;
+      }
+      
+      // Shared technologies bonus
+      if (currentProject.technologies && project.technologies) {
+        const sharedTechCount = currentProject.technologies.filter(tech => 
+          project.technologies.includes(tech)
+        ).length;
+        score += sharedTechCount * 5;
+      }
+      
+      // Recency bonus (newer projects get higher score)
+      const projectDate = new Date(project.createdAt || 0);
+      const daysSinceCreation = (Date.now() - projectDate.getTime()) / (1000 * 60 * 60 * 24);
+      const recencyScore = Math.max(0, 100 - daysSinceCreation / 30); // Decay over 30 days
+      score += recencyScore * 0.1;
+      
+      return { ...project, relevanceScore: score };
+    })
+    .filter(project => project.relevanceScore > 0) // Only include projects with some relevance
+    .sort((a, b) => b.relevanceScore - a.relevanceScore) // Sort by relevance
+    .slice(0, CONFIG.maxRelatedProjects); // Take top N
 }
 
 /**
  * Render related projects
  */
 function renderRelatedProjects(projects) {
-  const container = document.querySelector('.related-grid');
-  const section = document.getElementById('relatedProjects');
+  const { domElements } = ProjectDetail;
   
-  if (!container || !section) return;
+  if (!domElements.relatedGrid || !domElements.relatedProjects) return;
   
-  if (projects.length === 0) {
-    section.style.display = 'none';
-    return;
-  }
-  
-  container.innerHTML = projects.map(project => {
+  domElements.relatedGrid.innerHTML = projects.map(project => {
     const imageUrl = project.images && project.images.length > 0 
       ? project.images[0] 
-      : 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=600&h=400&fit=crop';
+      : 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23666">No image</text></svg>';
     
     return `
-      <a href="project-detail.html?id=${project.id}" class="related-project-card">
-        <div class="related-project-image">
-          <img src="${imageUrl}" alt="${project.title}" loading="lazy">
-        </div>
-        <div class="related-project-content">
-          <h3 class="related-project-title">${project.title}</h3>
-          <p class="related-project-description">${project.description || 'No description available'}</p>
-        </div>
-      </a>
+      <article class="related-project-card" role="listitem">
+        <a href="project-detail.html?id=${encodeURIComponent(project.id)}" class="related-project-link">
+          <div class="related-project-image">
+            <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(project.title)}" loading="lazy">
+          </div>
+          <div class="related-project-content">
+            <h3 class="related-project-title">${escapeHtml(project.title)}</h3>
+            <p class="related-project-description">${escapeHtml(project.description || 'No description available')}</p>
+          </div>
+        </a>
+      </article>
     `;
   }).join('');
   
-  section.style.display = 'block';
+  domElements.relatedProjects.style.display = 'block';
+  console.log(`Rendered ${projects.length} related projects`);
+}
+
+/**
+ * Hide related projects section
+ */
+function hideRelatedProjects() {
+  const { domElements } = ProjectDetail;
+  
+  if (domElements.relatedProjects) {
+    domElements.relatedProjects.style.display = 'none';
+  }
 }
 
 /* ==========================================================================
@@ -822,9 +1305,11 @@ function renderRelatedProjects(projects) {
  * Show loading screen
  */
 function showLoadingScreen() {
-  const loadingScreen = document.getElementById('loading-screen');
-  if (loadingScreen) {
-    loadingScreen.classList.remove('hidden');
+  const { domElements } = ProjectDetail;
+  
+  if (domElements.loadingScreen) {
+    domElements.loadingScreen.classList.remove('hidden');
+    domElements.loadingScreen.setAttribute('aria-hidden', 'false');
   }
 }
 
@@ -832,132 +1317,213 @@ function showLoadingScreen() {
  * Hide loading screen
  */
 function hideLoadingScreen() {
-  const loadingScreen = document.getElementById('loading-screen');
-  if (loadingScreen) {
-    loadingScreen.classList.add('hidden');
+  const { domElements } = ProjectDetail;
+  
+  if (domElements.loadingScreen) {
+    domElements.loadingScreen.classList.add('hidden');
+    domElements.loadingScreen.setAttribute('aria-hidden', 'true');
   }
 }
 
 /**
- * Show project error
+ * Show project error with custom message
  */
 function showProjectError(message) {
-  const errorScreen = document.getElementById('projectError');
-  const errorContent = errorScreen.querySelector('.error-content p');
+  const { domElements } = ProjectDetail;
   
-  if (errorContent) {
-    errorContent.textContent = message;
+  if (domElements.errorMessage) {
+    domElements.errorMessage.textContent = message;
   }
   
-  if (errorScreen) {
-    errorScreen.classList.remove('hidden');
+  if (domElements.errorScreen) {
+    domElements.errorScreen.classList.remove('hidden');
+    domElements.errorScreen.setAttribute('aria-hidden', 'false');
   }
   
   hideLoadingScreen();
 }
 
 /**
- * Show notification
+ * Show notification with auto-dismiss
  */
-function showNotification(message, type = 'info') {
+function showNotification(message, type = 'info', duration = 5000) {
+  const { domElements } = ProjectDetail;
+  
+  if (!domElements.notificationContainer) {
+    console.warn('Notification container not found');
+    return;
+  }
+  
   const notification = document.createElement('div');
   notification.className = `notification notification-${type}`;
   notification.textContent = message;
+  notification.setAttribute('role', 'alert');
+  notification.setAttribute('aria-live', 'assertive');
+  
+  // Style the notification
   notification.style.cssText = `
-    position: fixed;
-    top: 90px;
-    right: 20px;
-    background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#22c55e' : '#3b82f6'};
+    position: relative;
+    background: ${getNotificationColor(type)};
     color: white;
     padding: 1rem 1.5rem;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 1000;
-    transform: translateX(400px);
+    margin-bottom: 0.5rem;
+    transform: translateX(100%);
     transition: transform 0.3s ease;
     max-width: 350px;
+    word-wrap: break-word;
   `;
   
-  document.body.appendChild(notification);
+  domElements.notificationContainer.appendChild(notification);
   
-  setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+  // Animate in
   setTimeout(() => {
-    notification.style.transform = 'translateX(400px)';
+    notification.style.transform = 'translateX(0)';
+  }, 100);
+  
+  // Auto-dismiss
+  setTimeout(() => {
+    notification.style.transform = 'translateX(100%)';
     setTimeout(() => {
       if (notification.parentNode) {
         notification.remove();
       }
     }, 300);
-  }, 5000);
+  }, duration);
 }
 
 /**
- * Format text with line breaks
+ * Get notification color based on type
+ */
+function getNotificationColor(type) {
+  switch (type) {
+    case 'error': return '#ef4444';
+    case 'success': return '#22c55e';
+    case 'warning': return '#f59e0b';
+    default: return '#3b82f6';
+  }
+}
+
+/**
+ * Format text with line breaks and basic HTML escaping
  */
 function formatText(text) {
-  return text.replace(/\n/g, '<br>');
+  return escapeHtml(text).replace(/\n/g, '<br>');
 }
 
 /**
- * Format status text
+ * Format status text for display
  */
 function formatStatus(status) {
-  return status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  return status
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, l => l.toUpperCase());
 }
 
 /**
- * Format date
+ * Format date for display
  */
 function formatDate(date) {
   if (!date) return 'Unknown date';
   
   try {
-    return new Date(date).toLocaleDateString('en-US', {
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      return 'Invalid date';
+    }
+    
+    return dateObj.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
   } catch (error) {
+    console.error('Date formatting error:', error);
     return 'Invalid date';
   }
 }
 
 /**
- * Format numbers
+ * Format numbers with K/M suffixes
  */
 function formatNumber(num) {
   if (!num || isNaN(num)) return '0';
   
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M';
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'K';
+  const number = Number(num);
+  
+  if (number >= 1000000) {
+    return (number / 1000000).toFixed(1) + 'M';
+  } else if (number >= 1000) {
+    return (number / 1000).toFixed(1) + 'K';
   }
-  return num.toString();
+  return number.toString();
 }
 
 /**
- * Track project view
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+  if (typeof text !== 'string') return '';
+  
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
+ * Track project view safely
  */
 async function trackProjectView(projectId) {
   try {
-    if (window.FirebaseService?.isInitialized()) {
+    if (window.FirebaseService?.isInitialized() && window.FirebaseService.trackProjectView) {
       await window.FirebaseService.trackProjectView(projectId);
+      console.log('Project view tracked successfully');
     }
   } catch (error) {
     console.warn('Project view tracking failed:', error);
   }
 }
 
-// Export functions for global access
+/**
+ * Cleanup function to remove all event listeners
+ */
+function cleanup() {
+  console.log('Cleaning up project detail page...');
+  
+  // Remove all tracked event listeners
+  for (const [key, listeners] of ProjectDetail.eventListeners) {
+    listeners.forEach(({ element, event, handler }) => {
+      if (element && typeof element.removeEventListener === 'function') {
+        element.removeEventListener(event, handler);
+      }
+    });
+  }
+  
+  ProjectDetail.eventListeners.clear();
+  
+  // Reset state
+  ProjectDetail.isInitialized = false;
+  ProjectDetail.currentProject = null;
+  ProjectDetail.images = [];
+  ProjectDetail.currentImageIndex = 0;
+  
+  console.log('Cleanup completed');
+}
+
+// Handle page unload
+window.addEventListener('beforeunload', cleanup);
+
+// Export functions for global access (maintaining backward compatibility)
 window.ProjectDetail = {
   initialize: initializeProjectDetail,
   changeImage,
   shareProject,
-  copyProjectUrl
+  copyProjectUrl,
+  cleanup
 };
 
-// Make functions available globally for onclick handlers
+// Make specific functions available globally for any inline handlers
 window.changeImage = changeImage;
 window.shareProject = shareProject;
 window.copyProjectUrl = copyProjectUrl;
